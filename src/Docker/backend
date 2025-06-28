@@ -1,36 +1,34 @@
-# Use a slim Python base for smaller image size
 FROM python:3.11-slim
 
-# Build args for your Databank and website repos & branches
-ARG DATABANK_URL="https://github.com/MagnusSletten/Databank"
-ARG DATABANK_BRANCH="main"
-ARG WEBSITE_URL="https://github.com/MagnusSletten/nmrlipids-data-portal"
-ARG WEBSITE_BRANCH="dev"
+# Build-time args
+ARG DATABANK_URL=https://github.com/MagnusSletten/Databank
+ARG DATABANK_BRANCH=main
 
-# Flask and Databank path environment variables
-ENV FLASK_APP=app.py \
-    FLASK_ENV=production \
-    WEBSITE_URL=${WEBSITE_URL} \
+# Runtime environment
+ENV FLASK_ENV=production \
     DATABANK_PATH=/app/Databank
 
 WORKDIR /app
+
+# 1) Install git & create non-root user
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git \
  && rm -rf /var/lib/apt/lists/* \
  && useradd -m -s /bin/bash runner \
  && chown runner:runner /app
 
-# 2) Switch to runner and do all cloning + pip in one layer
+# 2) Copy in your portal backend source
+COPY --chown=runner:runner src/Backend /app/backend
+
+# 3) As root: install your requirements & clone Databank
+USER root
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt \
+ && git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL}" /app/Databank \
+ && pip install --no-cache-dir -e /app/Databank
+
+# 4) Drop to runner for runtime
 USER runner
-WORKDIR /app
+WORKDIR /app/backend
 
-RUN git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL}" Databank \
- && git clone --branch "${WEBSITE_BRANCH}" "${WEBSITE_URL}" website \
- \
- && pip install --no-cache-dir -r website/src/Backend/requirements.txt \
- && pip install --no-cache-dir -e Databank
-
-# 3) Runtime settings
-WORKDIR /app/website
 EXPOSE 5001
-CMD ["python3", "Backend/src/server.py"]
+CMD ["gunicorn", "--config", "gunicorn_config.py", "server:app"]

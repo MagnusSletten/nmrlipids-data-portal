@@ -10,6 +10,8 @@ import requests
 from github import Github
 from github import Auth
 
+# Base URL for Databank API
+databank_api_url = os.getenv("DATABANK_API_URL", "http://127.0.0.1:8000")
 
 WORK_REPO_NAME = 'MagnusSletten/BilayerData' #Where data is originally uploaded
 WORK_BASE_BRANCH = 'main' # A branch will be created based on this branch
@@ -23,15 +25,36 @@ repo_work = gh_work.get_repo(f"{WORK_REPO_NAME}")
 gh_target= Github(GITHUB_TARGET_TOKEN)
 
 
+def get_composition_names():
+    """
+    Fetches the list of composition names from the Databank API.
+    """
+    resp = requests.get(f"{databank_api_url}/compositions")
+    resp.raise_for_status()
+    return resp.json()
 
-def is_input_valid(info_yaml_dict:dict ):
-    """Validate the input file for the required keys and values."""
-    try:
-        sim, files = parse_valid_config_settings(info_yaml_dict)
-    except:
-        return False
 
-    return True
+def refresh_composition_file():
+    """
+    Triggers a refresh of the molecules.json via the Databank API and returns the refreshed count.
+    """
+    resp = requests.post(f"{databank_api_url}/refresh-compositions")
+    resp.raise_for_status()
+    data = resp.json()
+    return data.get("refreshed")
+
+
+def is_input_valid(info_yaml_dict: dict) -> bool:
+    """
+    Validates the provided YAML dict via the Databank API.
+    Returns True if valid, False otherwise.
+    """
+    resp = requests.post(
+        f"{databank_api_url}/info-valid-check", json=info_yaml_dict
+    )
+    if resp.status_code == 200:
+        return True
+    return False
 
 
 def run_command(command, error_message="Command failed", working_dir=None):
@@ -191,6 +214,16 @@ def refresh_composition_file(static_folder: str) -> int:
     os.replace(tmp, out_path)
 
     return len(all_ids)
+
+def is_input_valid(info_yaml_dict:dict ):
+    """Validate the input file for the required keys and values."""
+    try:
+        sim, files = parse_valid_config_settings(info_yaml_dict)
+    except:
+        return False
+
+    return True
+
 
 def user_has_push_access(user_token: str, repo_full_name: str) -> bool:
     """

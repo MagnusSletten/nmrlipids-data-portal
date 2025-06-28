@@ -1,0 +1,33 @@
+# Databank API Dockerfile
+# Uses Flask’s built-in server to expose composition endpoints.
+
+FROM python:3.11-slim
+
+# Build args for Databank repo
+ARG DATABANK_URL=https://github.com/MagnusSletten/Databank
+ARG DATABANK_BRANCH=main
+
+# Environment variables
+ENV DATABANK_PATH=/app/Databank \
+    MOLECULE_FILE=molecules.json
+
+WORKDIR /app
+
+# Install git and Python deps
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir flask pyyaml
+
+# Clone Databank and install DatabankLib
+RUN git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL}" Databank \
+ && pip install --no-cache-dir -e Databank
+
+# Copy the API application
+COPY src/Databank-api/databank-api.py /app/app_databank.py
+
+# Expose internal port
+EXPOSE 8000
+
+# Run Flask development server (sufficient for internal use)
+CMD ["python3", "app_databank.py"]
