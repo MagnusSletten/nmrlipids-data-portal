@@ -1,17 +1,13 @@
 # app.py
 import subprocess
-import os, yaml, time, json
-from werkzeug.datastructures import FileStorage
-from DatabankLib.databankLibrary import parse_valid_config_settings, YamlBadConfigException
-from DatabankLib.settings.molecules import lipids_set,molecules_set
-
+import os, yaml, time
 import sys 
 import requests 
 from github import Github
 from github import Auth
 
 # Base URL for Databank API
-databank_api_url = os.getenv("DATABANK_API_URL", "http://127.0.0.1:8000")
+databank_api_url = os.getenv("DATABANK_API_URL", "databank-api:8000")
 
 WORK_REPO_NAME = 'MagnusSletten/BilayerData' #Where data is originally uploaded
 WORK_BASE_BRANCH = 'main' # A branch will be created based on this branch

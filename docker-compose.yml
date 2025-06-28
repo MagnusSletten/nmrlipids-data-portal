@@ -16,5 +16,6 @@ services:
       - "5001:5001"
     env_file:
       - ../startup/backend.env
+      - - DATABANK_API_URL=http://databank-api:8000
     depends_on:
       - databank-api
