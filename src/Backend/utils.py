@@ -192,37 +192,6 @@ def create_pull_request_to_target(
         target_repo=target_repo
     )
 
-def get_composition_names():
-    # Combine the two sets of names
-    all_molecules = sorted(lipids_set.names.union(molecules_set.names))
-
-    return all_molecules
-
-
-
-def refresh_composition_file(static_folder: str) -> int:
-    """
-    Regenerate and atomically write out molecules.json into the given static folder.
-    Returns the number of entries written.
-    """
-    all_ids = sorted(lipids_set.names.union(molecules_set.names))
-    out_path = os.path.join(static_folder, 'molecules.json')
-    tmp = out_path + '.tmp'
-
-    with open(tmp, 'w') as f:
-        json.dump(all_ids, f, indent=2)
-    os.replace(tmp, out_path)
-
-    return len(all_ids)
-
-def is_input_valid(info_yaml_dict:dict ):
-    """Validate the input file for the required keys and values."""
-    try:
-        sim, files = parse_valid_config_settings(info_yaml_dict)
-    except:
-        return False
-
-    return True
 
 
 def user_has_push_access(user_token: str, repo_full_name: str) -> bool:

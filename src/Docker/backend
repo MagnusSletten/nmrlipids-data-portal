@@ -22,13 +22,11 @@ COPY --chown=runner:runner src/Backend /app/backend
 
 # 3) As root: install your requirements & clone Databank
 USER root
-RUN pip install --no-cache-dir -r /app/backend/requirements.txt \
- && git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL}" /app/Databank \
- && pip install --no-cache-dir -e /app/Databank
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
 # 4) Drop to runner for runtime
 USER runner
 WORKDIR /app/backend
 
 EXPOSE 5001
-CMD ["gunicorn", "--config", "gunicorn_config.py", "server:app"]
+CMD ["gunicorn", "--config", "gunicorn_config.py", "app:app"]
