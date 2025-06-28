@@ -1,0 +1,164 @@
+/* Reset & base */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #6EB7F1;     /* richer sky blue */
+  color: #000;                   
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+/* Grid container */
+.Container {
+  display: grid;
+  grid-template-columns: 15% auto 15%;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* Shared panel styling */
+.Left,
+.Right,
+.App {
+  background-color: #e0f2ff;     /* stronger pale azure */
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  border-radius: 8px;            
+}
+
+/* Left panel */
+.Left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border-right: 1px solid #b0c4de; /* slightly darker border */
+}
+
+/* Center panel */
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* Right panel */
+.Right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 1rem;
+  border-left: 1px solid #b0c4de;
+}
+
+/* Header */
+.App-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.App-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #0b3d91;      /* deeper navy-blue */
+}
+
+/* Form inputs */
+.name-input,
+.field input,
+.scalar-fields select {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #90a4ae;     /* a bit darker */
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+/* Upload form */
+.upload-form {
+  width: 100%;
+  max-width: 600px;
+  background: #ffffffdd;
+  padding: 1.5rem;
+  border: 1px solid #b0c4de;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+}
+
+/* Grid for scalar fields */
+.scalar-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  font-size: 20px;
+}
+
+/* Primary button */
+.button {
+  background-color: #0d47a1;     /* stronger blue */
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* Secondary (ghost) button */
+.button.secondary {
+  background: transparent;
+  border: 1px solid #0d47a1;
+  color: #0d47a1;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.20);
+}
+.button.secondary:hover {
+  background: rgba(13, 71, 161, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+.status-message-centered,
+.dropdown-label {
+  font-size: 25px;
+  color: #000;
+  margin-bottom: 1rem;
+}
+
+/* Admin panel */
+.Admin-panel {
+  width: 100%;
+  max-width: 280px;
+  padding: 1rem;
+  border: 1px solid #b0c4de;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  margin-bottom: 1rem;
+}
+.Admin-panel h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  color: #0b3d91;
+}
+
+.branch-select{
+  font-size: 17px;
+
+}
+
+.docs-link {
+  font-size: 1.25rem;       /* bump up the text size */
+  line-height: 1.5;         /* improve readability */
+  margin-top: 1.5rem;       /* space above */
+}
+.submit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
