@@ -4,8 +4,8 @@ FROM python:3.11-slim
 # Build args for your Databank and website repos & branches
 ARG DATABANK_URL="https://github.com/MagnusSletten/Databank"
 ARG DATABANK_BRANCH="main"
-ARG WEBSITE_URL="https://github.com/MagnusSletten/inf219-website"
-ARG WEBSITE_BRANCH="main"
+ARG WEBSITE_URL="https://github.com/MagnusSletten/nmrlipids-data-portal"
+ARG WEBSITE_BRANCH="dev"
 
 # Flask and Databank path environment variables
 ENV FLASK_APP=server.py \
