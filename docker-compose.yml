@@ -15,6 +15,6 @@ services:
     ports:
       - "5001:5001"
     env_file:
-      - startup/backend.env
+      - ../startup/backend.env
     depends_on:
       - databank-api
