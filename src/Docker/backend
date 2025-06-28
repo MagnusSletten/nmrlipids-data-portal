@@ -8,35 +8,29 @@ ARG WEBSITE_URL="https://github.com/MagnusSletten/nmrlipids-data-portal"
 ARG WEBSITE_BRANCH="dev"
 
 # Flask and Databank path environment variables
-ENV FLASK_APP=server.py \
+ENV FLASK_APP=app.py \
     FLASK_ENV=production \
     WEBSITE_URL=${WEBSITE_URL} \
     DATABANK_PATH=/app/Databank
 
-# Install git & Python deps in one layer
+WORKDIR /app
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git \
  && rm -rf /var/lib/apt/lists/* \
- && pip install --no-cache-dir Flask Flask-Cors PyYAML requests pyjwt PyGithub gunicorn
+ && useradd -m -s /bin/bash runner \
+ && chown runner:runner /app
 
-# Create and switch to a non-root user
-RUN useradd -m -s /bin/bash runner
+# 2) Switch to runner and do all cloning + pip in one layer
 USER runner
-
-# Set a single working dir under /app for all repos
 WORKDIR /app
 
-RUN git clone \
-      --branch "${DATABANK_BRANCH}" \
-      --recurse-submodules \
-      "${DATABANK_URL}" Databank \
- && pip install --break-system-packages -e Databank \
- && git clone \
-      --branch "${WEBSITE_BRANCH}" \
-      "${WEBSITE_URL}" inf219-website \
- && chown -R runner:runner /app
+RUN git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL}" Databank \
+ && git clone --branch "${WEBSITE_BRANCH}" "${WEBSITE_URL}" website \
+ \
+ && pip install --no-cache-dir -r website/src/Backend/requirements.txt \
+ && pip install --no-cache-dir -e Databank
 
-# Expose Flask port and launch from the website directory
-WORKDIR /app/inf219-website
+# 3) Runtime settings
+WORKDIR /app/website
 EXPOSE 5001
 CMD ["python3", "Backend/src/server.py"]
