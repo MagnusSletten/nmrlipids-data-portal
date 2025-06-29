@@ -24,7 +24,7 @@ export default function App() {
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
 );
-  const [loggedInMessage, setLoggedInMessage] = useState('');
+  const [loggedInMessage, setLoggedInMessage] = useState(null);
   const [userName, setUserName] = useState('');
   const [branch, setBranch] = useState('main');
   const [message, setMessage] = useState('Fill in the form');
@@ -130,7 +130,7 @@ useEffect(() => {
     localStorage.clear();
     setLoggedIn(false);
     setAdminStatus(false)
-    setLoggedInMessage('');
+    setLoggedInMessage(null);
     setMessage('Fill in the form');
     setUserName('');
     setBranch('main');
