@@ -1,81 +1,194 @@
-# Getting Started with Create React App
+# NMRLipids Data Portal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This repository contains a full-stack application adding new simulation info files to the Bilayer data repository on github.
+
+* **Databank API** – a Flask/Gunicorn service serving composition data from the Databank library
+* **Portal Backend** – a Flask/Gunicorn service that provides authenticated endpoints for file uploads and user authentitcation through github and proxies to the Databank API
+* **Frontend** – a React single-page app served by Nginx
+
+---
+
+## Table of Contents
+
+1. [Architecture](#architecture)
+2. [Prerequisites](#prerequisites)
+3. [Getting Started](#getting-started)
+
+   * [Environment Variables](#environment-variables)
+   * [Docker Compose](#docker-compose)
+4. [Services](#services)
+
+   * [Databank API](#databank-api)
+   * [Portal Backend](#portal-backend)
+   * [Frontend](#frontend)
+5. [Deployment](#deployment)
+
+   * [Frontend Build & Deploy](#frontend-build--deploy)
+   * [Nginx Configuration (Example)](#nginx-configuration-example)
+6. [License](#license)
+
+---
+
+## Architecture
+
+```text
+┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
+│    Frontend      │◄──►│  Portal Backend  │◄──►│   Databank API   │
+│ (React + Nginx)  │   │ (Flask/Gunicorn) │   │ (Flask/Gunicorn) │
+└──────────────────┘   └──────────────────┘   └──────────────────┘
 
 
-## Starting front end: 
-### `npm start`
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Portal Backend and Databank APi are run in Docker containers on a shared Docker network.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Nginx makes all traffic directed towards /app/ go to the Portal-Backend.
 
+Communication towards the Databank Api container is done exclusively through the Backend.
 
-## Starting back end:
-Make sure the front end points to the correct IP address for the backend within App.js
-Change `const IP` to match the backend IP.
+---
 
-The backend can be started as a docker container by binding port 5001:
+## Prerequisites
 
-```docker run -p 5001:5001 -e GITHUB_TOKEN=*** nmrlipids/backend ``` 
+* Docker & Docker Compose (v3.8+)
+* Node.js & npm (for local frontend development)
+* Git (for building the Databank API image)
 
-Alternatively it can just be started by running `server.py` with `GITHUB_TOKEN` as enviromental variable.  
+There are more depedencies within related projects, i.e nmrlipids/databank. These are installed in docker images and not needed in local environment.
 
-Note: The rest of this readme file is just default documentation.
+---
 
-### `npm test`
+## Getting Started
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Environment Variables
 
-### `npm run build`
+Create a `backend.env` file with your secrets inside a backend startup folder located right outside the clone of this repository.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```ini
+# backend.env
+clientsecret=example_client_secret
+jwtkey=example_jwt_signing_key
+GITHUB_TOKEN=example_github_token
+GITHUB_TARGET_TOKEN=example_github_target_token
+GITHUB_SERVER_AUTH_TOKEN=example_server_auth_token
+```
+The docker compose file, if not changed, will look for it in ` ../startup/backend.env`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+This can be changed to preferred location in the `docker-compose.yml` file.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**CRITICALLY IMPORTANT**: the .env file with secrets should never be added to any github repository. This repository will automatically ignore all .env files, but it's still best practices to never put the `backend.env` inside it. 
 
-### `npm run eject`
+### Docker Compose
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Bring up all services:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+docker-compose up 
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+This will:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+* Pull images for the Databank API and Portal Backend
+* Start the Databank API on port **8000**
+* Start the Portal Backend on port **5001**
 
-## Learn More
+To stop and remove containers:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+docker-compose down
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## Services
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Databank API
 
-### Analyzing the Bundle Size
+* **Image**: `nmrlipids/databank_api:latest`
+* **Port**: `8000`
+* **Env**:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+  * `DATABANK_PATH` – path to the cloned Databank repo inside the container
+  * `LOCAL_STATIC` – where `molecules.json` is written
 
-### Making a Progressive Web App
+**Endpoints**:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+* `GET  /compositions`
+* `POST /refresh-compositions`
+* `POST /info-valid-check`
+* `GET  /health`
 
-### Advanced Configuration
+### Portal Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+* **Image**: `nmrlipids/backend:latest`
+* **Port**: `5001`
+* **Env**:
 
-### Deployment
+  * `DATABANK_API_URL` – e.g. `http://databank-api:8000`
+  * Plus GitHub/OAuth secrets via `env_file`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+**Endpoints**:
 
-### `npm run build` fails to minify
+* `GET  /app/awake`
+* `POST /app/verifyCode`
+* `POST /app/refresh-composition`
+* `GET  /app/molecules`
+* `POST /app/upload`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Uses Gunicorn with configurable worker count.
+
+### Frontend
+
+Located under `src/Frontend`. Standard Create React App structure; built artifacts go into `/var/www/frontend/build`.
+
+---
+
+## Deployment
+
+### Frontend Build & Deploy
+
+Use the helper script (e.g. on an EC2 instance):
+
+```bash
+src/Frontend/build-ec2.sh
+```
+
+### Nginx Configuration (Example)
+
+Place a server block in `/etc/nginx/sites-available/project.conf`:
+
+```nginx
+server {
+    listen 80;
+    server_name (SEVER NAME); 
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name (SEVER NAME);
+    ssl_certificate     /etc/letsencrypt/live/magnus-demo-project.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/magnus-demo-project.com/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    root /var/www/frontend/build;
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+
+    location /app/ {
+        proxy_pass http://localhost:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+* Static React build served from `/var/www/frontend/build`
+* API requests under `/app/` proxied to the Portal Backend
+
+---

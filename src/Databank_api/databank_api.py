@@ -71,9 +71,8 @@ def is_input_valid():
 def health_check():
     return jsonify(status="ok"), 200
 
-if __name__ == '__main__':
-    # On startup: configure Git, update and refresh data
-    pull_latest()
-    refresh_composition_file()
+pull_latest()
+refresh_composition_file()
 
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=False)

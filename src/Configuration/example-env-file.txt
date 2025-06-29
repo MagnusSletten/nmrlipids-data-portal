@@ -1,4 +1,4 @@
 clientsecret=example_client_secret
-GITHUB_TOKEN=example_github_token
+GITHUB_TOKEN=example_github_token  
 GITHUB_TARGET_TOKEN=example_gitub_target_token
 GITHUB_SERVER_AUTH_TOKEN=example_server_auth_token

@@ -1,7 +1,10 @@
 version: '3.8'
+
 services:
   databank-api:
-    image: nmrlipids/databank_api:latest
+    build:
+      context: .
+      dockerfile: src/Docker/databank_api
     pull_policy: always
     ports:
       - "8000:8000"
@@ -10,8 +13,10 @@ services:
       - LOCAL_STATIC=/app/static
 
   portal-backend:
+    build:
+      context: .
+      dockerfile: src/Docker/backend
     image: nmrlipids/backend:latest
-    pull_policy: always
     ports:
       - "5001:5001"
     env_file:
