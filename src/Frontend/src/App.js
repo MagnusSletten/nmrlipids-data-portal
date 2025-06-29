@@ -112,6 +112,7 @@ useEffect(() => {
           localStorage.githubToken = token;
           localStorage.username   = username;
           localStorage.setItem('adminStatus', admin_status.toString());
+          setAdminStatus(admin_status)
           setLoggedIn(true);
           setLoggedInMessage(`Logged in as ${username}`);
           setAdminStatus(admin_status);     
