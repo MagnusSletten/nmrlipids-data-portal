@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   databank-api:
-    image: nmrlipids/databank-api:latest
+    image: nmrlipids/databank_api:latest
     pull_policy: always
     ports:
       - "8000:8000"

@@ -6,7 +6,7 @@ import requests
 from github import Github
 from github import Auth
 
-# Base URL for Databank API
+# Base URL for Databank API which is reference to running container
 databank_api_url = os.getenv("DATABANK_API_URL", "http://databank-api:8000")
 
 WORK_REPO_NAME = 'MagnusSletten/BilayerData' #Where data is originally uploaded

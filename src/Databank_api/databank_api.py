@@ -6,7 +6,7 @@ from DatabankLib.settings.molecules import lipids_set, molecules_set
 app = Flask(__name__)
 # Paths and filenames
 DATABANK_PATH = os.getenv("DATABANK_PATH", "/app/Databank")
-# Local static folder for this service, avoids writing back to the Databank repo
+# Local static folder for this service
 LOCAL_STATIC = os.getenv("LOCAL_STATIC", "/app/static")
 MOLECULE_FILE = os.path.join(LOCAL_STATIC, "molecules.json")
 
