@@ -139,7 +139,7 @@ def upload_file():
         return jsonify({'error': 'Missing userName or branch in JSON'}), 400
 
     if not utils.is_input_valid(data):
-        return jsonify({'error': 'Validation failed'}), 400
+        return jsonify({'error': 'Validation of info.yml failed, check required keys'}), 400
 
     commit_url,commit_branch = utils.push_to_repo_yaml(data,user_name)
 
