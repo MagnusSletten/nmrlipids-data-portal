@@ -24,4 +24,4 @@ services:
     environment:
       - DATABANK_API_URL=http://databank_api:8000
     depends_on:
-      - databank-api
+      - databank_api
