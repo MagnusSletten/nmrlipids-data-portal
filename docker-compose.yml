@@ -15,8 +15,8 @@ services:
   github_gateway:
     build:
       context: .
-      dockerfile: src/Docker/backend
-    image: nmrlipids/backend:latest
+      dockerfile: src/Docker/github_gateway
+    image: nmrlipids/github_gateway:latest
     ports:
       - "5001:5001"
     env_file:

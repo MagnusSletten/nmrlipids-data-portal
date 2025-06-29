@@ -1,6 +1,4 @@
 # Databank API Dockerfile
-# Uses Flask’s built-in server to expose composition endpoints.
-
 FROM python:3.11-slim
 
 # Build args for Databank repo
