@@ -181,7 +181,7 @@ const handleSubmit = async e => {
 return (
   <div className="Container">
     <div className="Left">
-      {loggedIn && localStorage.adminStatus && (
+      {loggedIn && adminStatus && (
         <div className="Admin-panel">
           <h3> Administration panel </h3>
           <div className="refresh-panel">
