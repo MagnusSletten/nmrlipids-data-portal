@@ -76,7 +76,6 @@ def verifyCode():
 
 @app.route('/app/refresh-composition', methods=['POST'])
 def updateCompositionList():
-    update_databank()
     auth = request.headers.get('Authorization','')
     if not auth.startswith('Bearer '):
         return jsonify(error="Missing token"), 401
@@ -86,7 +85,7 @@ def updateCompositionList():
         return jsonify(error="Insufficient privileges"), 403
 
     # now safe to refresh…
-    count = refresh_composition_file(os.path.join(os.path.dirname(__file__), 'static'))
+    count = refresh_composition_file()
     return jsonify(success=True, count=count), 200
 
 

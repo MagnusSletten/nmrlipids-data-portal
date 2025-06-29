@@ -37,10 +37,8 @@ def pull_latest():
 @app.route('/compositions', methods=['GET'])
 def list_compositions():
     """
-    GET /compositions - updates from Databank then returns local list of compositions.
+    GET /compositions - returns local list of compositions.
     """
-    pull_latest()
-    refresh_composition_file()
     with open(MOLECULE_FILE, 'r') as f:
         names = json.load(f)
     return jsonify(names), 200
