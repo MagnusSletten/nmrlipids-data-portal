@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+# Build-time args
+ARG DATABANK_URL=https://github.com/MagnusSletten/Databank
+ARG DATABANK_BRANCH=main
+
+# Runtime environment
+ENV FLASK_ENV=production \
+    DATABANK_PATH=/app/Databank
+
+WORKDIR /app
+
+# Install git & create non-root user
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd -m -s /bin/bash runner \
+ && chown runner:runner /app
+
+# Copy Github Gateway source
+COPY --chown=runner:runner src/Github_Gateway /app/backend
+
+#As root: install requirements 
+USER root
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+
+USER runner
+WORKDIR /app/backend
+
+EXPOSE 5001
+CMD ["gunicorn", "--config", "gunicorn_config.py", "app:app"]

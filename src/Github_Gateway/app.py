@@ -1,35 +1,36 @@
 # app.py
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import utils
-from utils import get_composition_names,refresh_composition_file,user_has_push_access, update_databank
-import json
 import requests 
-import jwt
 from requests.auth import HTTPBasicAuth
-import base64
-from github import Github
-from github import Auth
+import logging
+
+
 
 app = Flask(__name__)
 CORS(app)
+logger = logging.getLogger('gunicorn.error')
+logger.setLevel(logging.INFO)
 
-# Constants
+#Constants
 
-ClientID =  "Ov23liS8svKowq4uyPcG"
-ClientSecret = os.getenv("clientsecret")
-jwt_key = os.getenv("jwtkey")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-authentication_repository="MagnusSletten/Databank"
+#Oauth-app credentials for nmrlipids-user-authenticator 
+ClientID =  os.getenv("OAUTH_ID")
+ClientSecret = os.getenv("OAUTH_SECRET")
 
 
-@app.route('/app/awake', methods=['GET','OPTIONS'])
+@app.route('/awake', methods=['GET','OPTIONS'])
 def awake():
     return "<h1> Server is awake!<h1>", 200
 
-@app.route('/app/verifyCode', methods=['POST', 'OPTIONS'])
+
+@app.route('/verifyCode', methods=['POST', 'OPTIONS'])
 def verifyCode():
+    """
+    Endpoint to check users permissions with Github, runs after user has logged  in.
+    """
 
     if request.method == 'OPTIONS':
        return '', 200
@@ -62,10 +63,7 @@ def verifyCode():
     username = user_info.get("login")
 
     # Check their push/admin access on the repo
-    admin_status = user_has_push_access(
-        access_token,
-        authentication_repository
-    )
+    admin_status = utils.user_has_push_access(access_token)
 
     return jsonify({
         "authenticated": True,
@@ -74,29 +72,28 @@ def verifyCode():
         "admin_status": admin_status
     })
 
-@app.route('/app/refresh-composition', methods=['POST'])
-def updateCompositionList():
-    update_databank()
+
+@app.route('/user-admin-check', methods=['POST'])
+def user_admin_check():
+    """
+    #Endpoint for refreshing molcule lists for compositions
+    """
     auth = request.headers.get('Authorization','')
     if not auth.startswith('Bearer '):
         return jsonify(error="Missing token"), 401
     user_token = auth.split()[1]
 
-    if not user_has_push_access(user_token, authentication_repository):
+    if not utils.user_has_push_access(user_token):
         return jsonify(error="Insufficient privileges"), 403
 
-    # now safe to refresh…
-    count = refresh_composition_file(os.path.join(os.path.dirname(__file__), 'static'))
-    return jsonify(success=True, count=count), 200
+    return jsonify(authorized=True), 200
 
-
-
-@app.route('/app/molecules', methods=['GET'])
-def list_molecules_root():
-    return jsonify(get_composition_names()), 200
 
 
 def authorizeToken(access_token):
+    """
+    #Method for checking validity of user token. 
+    """
     url = f"https://api.github.com/applications/{ClientID}/token"
     headers = {"Accept": "application/vnd.github+json"}
     data = {"access_token": access_token}
@@ -115,9 +112,12 @@ def authorizeToken(access_token):
 
     except Exception as e:
         return None, str(e), 500
- 
-@app.route('/app/upload', methods=['POST'])
+
+@app.route('/upload', methods=['POST'])
 def upload_file():
+    """
+    #Endpoint to upload info.yml file to repository 
+    """
     token_pre = request.headers.get('authorization')
     token = token_pre.split(' ')[1] if token_pre and " " in token_pre else None
 
@@ -135,31 +135,29 @@ def upload_file():
         return jsonify({'error': 'Malformed or empty JSON body'}), 400
 
     user_name   = data.pop('userName', None)
+    logger.info(f"User name: {user_name}")
     base_branch = data.pop('branch',   None)
     if not user_name or not base_branch:
         return jsonify({'error': 'Missing userName or branch in JSON'}), 400
 
     if not utils.is_input_valid(data):
-        return jsonify({'error': 'Validation failed'}), 400
+        return jsonify({'error': 'Validation of info.yml failed, check required keys'}), 400
 
     commit_url,commit_branch = utils.push_to_repo_yaml(data,user_name)
 
     url = utils.create_pull_request_to_target(
-        head_ref=commit_branch,
-        title= f"Simulation files from {user_name}",
-        body=f"Processing of simulation data will happen after approval")
+        head_branch=commit_branch,
+        title=f"Upload Portal: Simulation files from {user_name}",
+        body=f"""\
+This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
 
+Processing of simulation data will happen after approval.
+"""
+)
     return jsonify(message="Uploaded!", pullUrl=url), 200
  
 
 if __name__ == '__main__':
-    if not ClientSecret:
-        raise ValueError("Missing client secret in environment!")
-    utils.git_setup()
-    utils.git_pull()
-    # point at the real static folder
-    static_dir = os.path.join(os.path.dirname(__file__), 'static')
-    refresh_composition_file(static_dir)
     app.run(host='0.0.0.0', port=5001, debug=False)
 
 

@@ -1,66 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
-import logo from './logo.svg';
 import BranchSelect from './BranchSelect';
-import Description from './Description';
 import { useImmer } from 'use-immer';
 import CompositionEditor from './CompositionEditor';
 import ScalarFields    from './ScalarFields';
-
-// Scalar fields
-const scalarFields = [
-  'DOI','SOFTWARE','TRJ','TPR','PREEQTIME','TIMELEFTOUT','DIR_WRK',
-  'UNITEDATOM_DICT','TYPEOFSYSTEM','SYSTEM','PUBLICATION','TEMPERATURE','AUTHORS_CONTACT',
-  'BATCHID','SOFTWARE_VERSION','FF','FF_SOURCE','FF_DATE','CPT','LOG','TOP','GRO','EDR',
-];
+import fieldConfig from './FieldConfig';
+import UnitedAtomDictEditor from './UnitedAtomDictEditor';
 
 
 export default function App() {
-  const ClientID = 'Ov23liS8svKowq4uyPcG';
+  const ClientID = 'Ov23liS8svKowq4uyPcG'; 
+  const DataRepo = "MagnusSletten/BilayerData"
   const IP = '/app/';
+  const API_PATH = '/api/'; 
 
-  /* Auth & User */
   const [loggedIn, setLoggedIn] = useState(false);
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
 );
-  const [loggedInMessage, setLoggedInMessage] = useState('');
+  const [loggedInMessage, setLoggedInMessage] = useState(null);
   const [userName, setUserName] = useState('');
   const [branch, setBranch] = useState('main');
   const [message, setMessage] = useState('Fill in the form');
   const [pullRequestUrl, setPullRequestUrl] = useState(null);
   const [refreshMessage, setRefreshMessage] = useState('');
-  const [compositionList, setCompositionList] = useState([]);
+  const [moleculeList, setMoleculeList] = useState([]);
+  const [uploadStatus, setUploadStatus] = useState(null);
+  const mappingDict = JSON.parse(
+  localStorage.getItem('mappingDict') || '{}'
+);
 
-  // Fetch the up‐to‐date molecule list on mount
-  useEffect(() => {
-    axios.get(`${IP}molecules`)
-      .then(res => setCompositionList(res.data))
+// Fetch the up‐to‐date molecule list on mount:
+ useEffect(() => {
+    axios.get(`${API_PATH}molecules`)
+      .then(res => setMoleculeList(res.data))
       .catch(err => console.error("Failed to load molecules:", err));
   }, []);
+// Fetch mapping files on mount
+useEffect(() => {
+  axios.get(`${API_PATH}mapping-files`)
+    .then(res => {
+      localStorage.setItem('mappingDict', JSON.stringify(res.data)); 
+    })
+    .catch(err => console.error("Failed to load mappings:", err));
+}, []);  
 
-const updateComposition = async () => {
+// Function to update molecule list:
+const updateMolecules = async () => {
   try {
     await axios.post(
-      `${IP}refresh-composition`,
+      `${API_PATH}refresh-molecules`,
       {},
       { headers: { Authorization: `Bearer ${localStorage.githubToken}` } }
     );
-    setRefreshMessage('Composition list updated successfully');
+    setRefreshMessage('Molecule list updated successfully');
     // re-fetch updated list
-    const resp = await axios.get(`${IP}molecules`);
-    setCompositionList(resp.data);
+    const resp = await axios.get(`${API_PATH}molecules`);
+    setMoleculeList(resp.data);
   } catch (err) {
     if (err.response?.status === 403) {
-      setRefreshMessage('Not authorized');
+      setRefreshMessage('Not authorized to refresh molecules');
     } else {
       setRefreshMessage('Refresh failed');
     }
   }
   };
 
-
+// Contains data for the form 
 const [data, setData] = useImmer({
   DOI: null,
   TRJ: null,
@@ -68,14 +75,12 @@ const [data, setData] = useImmer({
   SOFTWARE: null,
   PREEQTIME: null,
   TIMELEFTOUT: null,
-  DIR_WRK: null,
-  UNITEDATOM_DICT: null,
+  UNITEDATOM_DICT: {},
   TYPEOFSYSTEM: null,
   TEMPERATURE: null,
   SYSTEM: null,
   PUBLICATION: null,
   AUTHORS_CONTACT: null,
-  BATCHID: null,
   SOFTWARE_VERSION: null,
   FF: null,
   FF_SOURCE: null,
@@ -88,14 +93,20 @@ const [data, setData] = useImmer({
   COMPOSITION: {}
 });
 
-// 1) change any scalar
+// Method to handle changes in form fields:
 const handleChange = e => {
   const { name, value } = e.target;
-  setData(draft => { draft[name] = value.trimEnd() });
+  const { type, trim } = fieldConfig[name];
+  let val = value;
+  if (trim) val = val.trim();
+  let parsed = val;
+  if (type === 'integer') parsed = val === '' ? '' : parseInt(val, 10);
+  else if (type === 'float') parsed = val === '' ? '' : parseFloat(val);
+  setData(draft => { draft[name] = parsed; });
 };
 
 
-
+// Handles process after url has been redirected back from Github:
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
@@ -111,7 +122,8 @@ useEffect(() => {
           const { token, username, admin_status } = res.data;
           localStorage.githubToken = token;
           localStorage.username   = username;
-          localStorage.adminStatus = adminStatus; 
+          localStorage.setItem('adminStatus', admin_status.toString());
+          setAdminStatus(admin_status)
           setLoggedIn(true);
           setLoggedInMessage(`Logged in as ${username}`);
           setAdminStatus(admin_status);     
@@ -121,39 +133,51 @@ useEffect(() => {
       .catch(() => setMessage('GitHub login failed'));
   }
 }, []);
-
+// Starts login process:
   const githubLogin = () => {
     window.location.assign(`https://github.com/login/oauth/authorize/?client_id=${ClientID}`);
   };
-
+// Handles logout process:
   const handleLogout = () => {
     localStorage.clear();
     setLoggedIn(false);
     setAdminStatus(false)
-    setLoggedInMessage('');
+    setLoggedInMessage(null);
     setMessage('Fill in the form');
     setUserName('');
     setBranch('main');
     setPullRequestUrl(null);
-    setData({
-    DOI: '', SOFTWARE: '',TRJ: '',TPR: '',PREEQTIME: 0,TIMELEFTOUT: 0,DIR_WRK: '', UNITEDATOM_DICT: '', TYPEOFSYSTEM: '',
-    SYSTEM: '', PUBLICATION: '',AUTHORS_CONTACT: '', BATCHID: '', SOFTWARE_VERSION: '', FF: '', FF_SOURCE: '',
-    FF_DATE: '', CPT: '', LOG: '', TOP: '', EDR: '', COMPOSITION: {}
-    });
-  };
-
-
-
+    setUploadStatus(null);
+    setData(draft => {
+      Object.keys(fieldConfig).forEach(key => {
+        draft[key] = null;
+      });
+      draft.COMPOSITION = {};
+    }); 
+  }
+    
+// Handles form submission:
 const handleSubmit = async e => {
   e.preventDefault();
-
+  // Removes null or empty values from data object:
+  const filteredData = Object.fromEntries(
+  Object.entries(data).filter(([_, v]) => {
+    if (v === null || v === "") return false;
+    if (Array.isArray(v) && v.length === 0) return false;
+    if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0)
+      return false;
+    return true;
+  })
+  );
+  // Creates JSON payload from data
   const jsonPayload = {
-    ...data,
+    ...filteredData,
     userName,
     branch
   };
 
-  console.log( 'Sending payload:', jsonPayload);
+  console.log('Sending payload:', jsonPayload);
+  setUploadStatus('Uploading data…');
 
   try {
     const resp = await axios.post('/app/upload', jsonPayload, {
@@ -162,31 +186,30 @@ const handleSubmit = async e => {
         Authorization: `Bearer ${localStorage.githubToken}`
       }
     });
+
     console.log('Upload succeeded:', resp.data);
-    setMessage('Upload succeeded!');
+    setUploadStatus('Upload succeeded!');
+    
     if (resp.data.pullUrl) {
-     setPullRequestUrl(resp.data.pullUrl);
+      setPullRequestUrl(resp.data.pullUrl);
     }
+
   } catch (err) {
-    if (err.response) {
-      console.error('Server responded with:', err.response.status, err.response.data);
-      setMessage(`Upload failed: ${err.response.data.error}`);
-    } else {
-      console.error('Network or other error', err);
-      setMessage(`Upload failed: ${err.message}`);
-    }
+    const errorMsg = err.response?.data?.error ?? err.message;
+    console.error('Upload error', err.response?.status, err.response?.data || err);
+    setUploadStatus(`Upload failed: ${errorMsg}`);
   }
 };
 
 return (
   <div className="Container">
     <div className="Left">
-      {loggedIn && localStorage.adminStatus && (
+      {loggedIn && adminStatus && (
         <div className="Admin-panel">
           <h3> Administration panel </h3>
           <div className="refresh-panel">
-            <button onClick={updateComposition} className="button secondary">
-              Update lipid list
+            <button onClick={updateMolecules} className="button secondary">
+              Update molecule list
             </button>
             {refreshMessage && <p className="centered">{refreshMessage}</p>}
           </div>
@@ -198,9 +221,7 @@ return (
       <header className="App-header">
         <h1>Welcome to the NMRLipids Upload Portal</h1>
       </header>
-
           {!loggedIn && (
-            
        <> 
         <button
             onClick={githubLogin}
@@ -208,14 +229,12 @@ return (
           >
             GitHub Login
           </button>
-
          <h3>Information</h3>
          <div className="info-block">
          <p>Please log in with GitHub to upload data.</p>
          <p>GitHub login is currently used as a way to authenticate users and reduce spam.</p>
          <p>The login process authorizes the app to access your public information, specifically your username. Nothing else.</p>
         </div>
-         
         </>
       )}
 
@@ -232,42 +251,46 @@ return (
             selectedBranch={branch}
             setSelectedBranch={setBranch}
             setMessage={setMessage}
+            DataRepo={DataRepo}
           />
           {message && <p className="status-message-centered">Status: {message}</p>}
 
           <form onSubmit={handleSubmit} className="upload-form">
-            <ScalarFields
-              fields={scalarFields}
-              data={data}
-              onChange={handleChange}
-            />
+              <ScalarFields
+                data={data}
+                onChange={handleChange}
+                fieldConfig={fieldConfig}
+                />
+              <UnitedAtomDictEditor data={data} setData={setData} />
 
-            <CompositionEditor
-              options={compositionList}
-              composition={data.COMPOSITION}
-              setComposition={recipe =>
-                setData(draft => {
-                  recipe(draft.COMPOSITION);
-                })
-              }
-            />
-
-            <div className="submit-row">
-              <button type="submit" className="button">
-                Submit
-              </button>
-
-              {pullRequestUrl && (
-                <a
-                  href={pullRequestUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="button"
-                >
-                  View Pull Request
-                </a>
+              <CompositionEditor
+                options={moleculeList}
+                mappingDict={mappingDict}  
+                composition={data.COMPOSITION}
+                setComposition={recipe =>
+                  setData(draft => {
+                    recipe(draft.COMPOSITION);
+                  })
+                }
+              />
+              <div className="submit-row">
+                <button type="submit" className="button">
+                  Submit
+                </button>
+                {uploadStatus && (
+                <p className="upload-status" style={{ marginRight: '1em' }}>
+                  {uploadStatus}
+                </p>
               )}
-            </div>
+                {pullRequestUrl && (
+                  <a
+                    href={pullRequestUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="button"
+                  >View Pull Request</a>
+                )}
+              </div>
           </form>
                 {/* Simple text link to docs */}
          <p className="docs-link">
@@ -290,9 +313,10 @@ return (
       Logout
     </button>
   )}
-  <Description />
+    {loggedIn && loggedInMessage && (
+   <p className="user-info">{loggedInMessage}</p>
+   )}
 
-  
 </div>
 </div>
 );

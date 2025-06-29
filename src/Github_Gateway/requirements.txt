@@ -1,0 +1,6 @@
+Flask
+Flask-Cors
+PyYAML
+requests
+PyGithub
+gunicorn

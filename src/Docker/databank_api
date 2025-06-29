@@ -1,0 +1,33 @@
+# Databank API Dockerfile
+FROM python:3.11-slim
+
+# Build args for Databank repo
+ARG DATABANK_URL=https://github.com/NMRLipids/Databank
+ARG DATABANK_BRANCH=main
+
+# Environment variables
+ENV DATABANK_PATH=/app/Databank 
+  
+WORKDIR /app
+
+# Install git and Python deps
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir flask pyyaml gunicorn 
+
+# Clone Databank and install DatabankLib
+RUN git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL}" Databank \
+ && pip install --no-cache-dir -e Databank
+
+# Copy the API application
+COPY src/Databank_api/databank_api.py /app/databank_api.py
+COPY src/Databank_api/requirements.txt /app/requirements.txt
+COPY src/Databank_api/gunicorn_config.py /app/gunicorn_config.py
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose internal port
+EXPOSE 8000
+
+CMD ["gunicorn", "-c", "gunicorn_config.py", "databank_api:app"]

@@ -3,7 +3,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: #6EB7F1;     /* richer sky blue */
+  background-color: #6EB7F1;     
   color: #000;                   
   font-family: "Segoe UI", Roboto, sans-serif;
 }
@@ -20,7 +20,7 @@ html, body {
 .Left,
 .Right,
 .App {
-  background-color: #e0f2ff;     /* stronger pale azure */
+  background-color: #e0f2ff;     
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   border-radius: 8px;            
 }
@@ -31,7 +31,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-  border-right: 1px solid #b0c4de; /* slightly darker border */
+  border-right: 1px solid #b0c4de; 
 }
 
 /* Center panel */
@@ -50,6 +50,7 @@ html, body {
   align-items: flex-end;
   padding: 1rem;
   border-left: 1px solid #b0c4de;
+  gap: 0.5rem;
 }
 
 /* Header */
@@ -60,7 +61,7 @@ html, body {
 .App-header h1 {
   margin: 0;
   font-size: 1.75rem;
-  color: #0b3d91;      /* deeper navy-blue */
+  color: #0b3d91;     
 }
 
 /* Form inputs */
@@ -71,7 +72,7 @@ html, body {
   max-width: 320px;
   padding: 8px 12px;
   margin-bottom: 12px;
-  border: 1px solid #90a4ae;     /* a bit darker */
+  border: 1px solid #90a4ae;     
   border-radius: 4px;
   font-size: 1rem;
 }
@@ -97,7 +98,7 @@ html, body {
 
 /* Primary button */
 .button {
-  background-color: #0d47a1;     /* stronger blue */
+  background-color: #0d47a1;   
   border: none;
   color: #fff;
   padding: 10px 20px;
@@ -153,12 +154,46 @@ html, body {
 }
 
 .docs-link {
-  font-size: 1.25rem;       /* bump up the text size */
-  line-height: 1.5;         /* improve readability */
-  margin-top: 1.5rem;       /* space above */
+  font-size: 1.25rem;       
+  line-height: 1.5;         
+  margin-top: 1.5rem;      
 }
 .submit-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 20% auto 30%;
   align-items: center;
+  
+}
+
+.upload-status {
+  text-align: center;
+}
+
+.mapping-select {
+  width: 180px;          
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.united-dict-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.united-dict-section .dict-entry {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.united-dict-section > button {
+  align-self: flex-start;
+}
+.user-info {
+  color: #0b3d91;
+  font-size: 1.25rem;
+  margin-top: auto;
+  margin-bottom: 1rem; 
+
 }

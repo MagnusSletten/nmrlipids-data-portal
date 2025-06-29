@@ -1,0 +1,13 @@
+# Repo where data is pushed:
+WORK_REPO_NAME=nmrlipids_user_data
+
+#Main data repo:
+PULL_REQUEST_TARGET_REPO=NMRLipids/Bilayerdata
+
+# GitHub App credentials:
+GITHUB_APP_ID=123456
+GITHUB_APP_PRIVATE_KEY_PEM="-----BEGIN RSA PRIVATE KEY----- your key -----END RSA PRIVATE KEY-----"
+
+# OAuth App credentials:
+ClientID=your_oauth_client_id
+ClientSecret=your_oauth_client_secret

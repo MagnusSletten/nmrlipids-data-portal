@@ -1,81 +1,194 @@
-# Getting Started with Create React App
+# NMRLipids Data Portal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This repository contains a full-stack application adding new simulation info files to the Bilayer data repository on github.
+
+* **Frontend** – a React single-page app served by Nginx
+* **Github Gateway** – a Flask/Gunicorn service that provides authenticated endpoints for file uploads and user authentitcation through github and proxies to the Databank API
+* **Databank API** – a Flask/Gunicorn service serving composition data from the Databank library
+
+If anything is unclear. feel free to reach out at: magnus_sletten@outlook.com
+
+---
+
+## Table of Contents
+
+1. [Architecture](#architecture)
+2. [Prerequisites](#prerequisites)
+3. [Getting Started](#getting-started)
+
+   * [Environment Variables](#environment-variables)
+   * [Docker Compose](#docker-compose)
+4. [Services](#services)
+
+   * [Databank API](#databank-api)
+   * [Github Gateway](#github_gateway)
+   * [Frontend](#frontend)
+5. [Deployment](#deployment)
+
+   * [Frontend Build & Deploy](#frontend-build--deploy)
+   * [Nginx Configuration (Example)](#nginx-configuration-example)
+6. [License](#license)
+
+---
+
+## Architecture
+
+```text
+                               ───────── Nginx ──────────
+                               |                        |
+┌───────────────┐              |  ┌──────────────────┐  |
+│   Frontend    │ ────────────►|  │  Github Gateway  │  |
+│    (React)    │              |  └──────────────────┘  |
+└───────────────┘              |           ↑            |
+                               |           │            |
+                               |           ↓            |
+                               |  ┌──────────────────┐  |
+                               |  │   Databank API   │  |
+                               |  └──────────────────┘  |
+                               ──────────────────────────
+```
+
+Github Gateway and Databank API are run in Docker containers on a shared Docker network.
+
+Nginx makes all traffic directed towards /app/ go to the Github Gateway and /api/ goes towards Databank API.
+
+Authentication is done via Github's API through a registered a Github Oauth application. 
+
+Changes to data repository is done with the help of a registered [Github App](https://github.com/apps/simulation-addition-helper). 
+
+The Github App could also do the exact same authentication as the Github Oauth app, but due to an unfortunate UI choice within Github apps the decision was made to keep both. See [this discussion on Github](https://github.com/orgs/community/discussions/37117) for more information on this.
+
+---
+
+## Prerequisites
+
+* Docker & Docker Compose (v3.8+)
+* Node.js & npm 
+* Git (for building the Databank API image)
+* Nginx for handling secure HTTPS traffic. 
+
+There are more depedencies within related projects, i.e nmrlipids/databank but these are installed in docker images and not needed in local environment.
+
+---
+
+## Getting Started
+
+### Environment Variables
+
+Create a `backend.env` file with your secrets inside a backend startup folder located right outside the clone of this repository within `startup/backend.env`
+
+An example env file is located within this repository here:
+`src\Configuration\example-env-file.txt` and it will list all required evironmental txt files. 
+
+The docker compose file, if not changed, will look for it in  `../startup/backend.env`
+
+```text
+Your-start-location/
+├── nmrlipids-data-portal/
+│  
+└── startup/
+    └── backend.env      # environment vars for backend
+
+```
+This can be changed to preferred location in the `docker-compose.yml` file.
+
+**CRITICALLY IMPORTANT**: the .env file with secrets should never be added to any github repository. This repository will automatically ignore all .env files, but it's still best practices to never put the `backend.env` inside it. 
+
+### Docker Compose
+
+#### Starts backend services:
+
+(Note that the Docker Compose invocation depends on your setup: if you have the standalone binary, use docker-compose, but if you’re using the built-in plugin, use docker compose.)
+
+Bring up all services in detatched mode:
+
+```bash
+docker-compose up --build -d 
+```
+Removing -d from the command would start the containers attached and stream their logs live in your terminal.
+
+This will:
+
+* Build the images for the Databank API and Github Gateway
+* Start the Databank API on port **8000**
+* Start the Github Gateway on port **5001**
+
+To stop and remove containers:
+
+```bash
+docker-compose down
+```
+
+Note that on first build this will be slower since everything is built from scratch. Expect it to take ~ 2-3 minutes to start everything the first time. The next start ups will be fast: <15 seconds.
+
+To completely remove all docker related resources the following command can be used:
+```
+docker system prune -a
+```
+
+---
+
+## Services
+
+### Databank API
+
+* **Image**: nmrlipids/databank_api:latest  
+* **Port**: 8000  
+
+**Endpoints**:
+
+- GET  /api/health  
+- GET  /api/molecules  
+- GET  /api/mapping-files  
+- POST /api/refresh-molecules  
+- POST /api/refresh-mapping-files  
+- POST /api/info-valid-check  
+
+---
+
+### GitHub Gateway
+
+* **Image**: nmrlipids/github_gateway:latest  
+* **Port**: 5001  
+
+**Endpoints**:
+
+- GET  /app/awake  
+- POST /app/verifyCode  
+- POST /app/user-admin-check  
+- POST /app/refresh-composition  
+- POST /app/upload  
 
 
-## Starting front end: 
-### `npm start`
+### Frontend
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Located under `src/Frontend`. Standard Create React App structure; built artifacts go into `/var/www/frontend/build`.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
+## Deployment
 
-## Starting back end:
-Make sure the front end points to the correct IP address for the backend within App.js
-Change `const IP` to match the backend IP.
+### Frontend Build & Deploy
 
-The backend can be started as a docker container by binding port 5001:
+Use the helper script: build_frontend.sh
 
-```docker run -p 5001:5001 -e GITHUB_TOKEN=*** nmrlipids/backend ``` 
+Look at the deployment details within the script first: By default it will delete the contents of: `/var/www/frontend/build` then move the newly built files there. 
 
-Alternatively it can just be started by running `server.py` with `GITHUB_TOKEN` as enviromental variable.  
+```bash
+./build_frontend.sh
+```
 
-Note: The rest of this readme file is just default documentation.
+If you want a different Node deployment location it can be changed within the ` ./build_frontend.sh` script. 
 
-### `npm test`
+### Nginx Configuration (Example)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+For HTTPS traffic with a specific domain. 
 
-### `npm run build`
+Place server blocks in `/etc/nginx/sites-available/upload-portal.conf`:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+(SSL certificates should be managed before changing this file accordingly)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Example of the Nginx block is found in this repository at the following location: 
+`src\Configuration\nginx_config.conf`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---

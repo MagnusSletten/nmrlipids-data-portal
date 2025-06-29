@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const DataRepo = "MagnusSletten/BilayerData"
-
-function BranchSelect({ selectedBranch, setSelectedBranch, setMessage }) {  
+function BranchSelect({ selectedBranch, setSelectedBranch, setMessage, DataRepo }) {  
   const [branches, setBranches] = useState([]); 
 
   useEffect(() => {
