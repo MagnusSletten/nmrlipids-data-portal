@@ -32,10 +32,10 @@ This repository contains a full-stack application adding new simulation info fil
 ## Architecture
 
 ```text
-┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
-│    Frontend      │◄──►│  Portal Backend  │◄──►│   Databank API   │
-│ (React + Nginx)  │   │ (Flask/Gunicorn) │   │ (Flask/Gunicorn) │
-└──────────────────┘   └──────────────────┘   └──────────────────┘
+┌──────────────────┐    ┌──────────────────┐     ┌──────────────────┐
+│    Frontend      │◄──►│  Portal Backend  │◄──► │   Databank API   │
+│ (React + Nginx)  │    │ (Flask/Gunicorn) │     │ (Flask/Gunicorn) │
+└──────────────────┘    └──────────────────┘     └──────────────────┘
 
 
 ```
@@ -53,6 +53,7 @@ Communication towards the Databank Api container is done exclusively through the
 * Docker & Docker Compose (v3.8+)
 * Node.js & npm (for local frontend development)
 * Git (for building the Databank API image)
+* Nginx 
 
 There are more depedencies within related projects, i.e nmrlipids/databank. These are installed in docker images and not needed in local environment.
 
@@ -67,7 +68,6 @@ Create a `backend.env` file with your secrets inside a backend startup folder lo
 ```ini
 # backend.env
 clientsecret=example_client_secret
-jwtkey=example_jwt_signing_key
 GITHUB_TOKEN=example_github_token
 GITHUB_TARGET_TOKEN=example_github_target_token
 GITHUB_SERVER_AUTH_TOKEN=example_server_auth_token
@@ -78,7 +78,7 @@ This can be changed to preferred location in the `docker-compose.yml` file.
 
 **CRITICALLY IMPORTANT**: the .env file with secrets should never be added to any github repository. This repository will automatically ignore all .env files, but it's still best practices to never put the `backend.env` inside it. 
 
-### Docker Compose
+### Docker Compose (will only start backend services)
 
 Bring up all services:
 
@@ -88,7 +88,7 @@ docker-compose up
 
 This will:
 
-* Pull images for the Databank API and Portal Backend
+* Build the images for the Databank API and Portal Backend
 * Start the Databank API on port **8000**
 * Start the Portal Backend on port **5001**
 
@@ -96,6 +96,13 @@ To stop and remove containers:
 
 ```bash
 docker-compose down
+```
+
+Note that on first build this will be slower since everything is built from scratch. Expect it to take ~ 2 minutes to start everything the first time. The next start ups will be fast <10 seconds.
+
+To completely remove all docker related resources the following command can be used:
+```
+docker system prune -a
 ```
 
 ---

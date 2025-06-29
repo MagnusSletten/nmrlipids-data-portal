@@ -1,18 +1,18 @@
 version: '3.8'
 
 services:
-  databank-api:
+  databank_api:
     build:
       context: .
       dockerfile: src/Docker/databank_api
-    pull_policy: always
+    image: nmrlipids/databank_api:latest
     ports:
       - "8000:8000"
     environment:
       - DATABANK_PATH=/app/Databank
       - LOCAL_STATIC=/app/static
 
-  portal-backend:
+  github_gateway:
     build:
       context: .
       dockerfile: src/Docker/backend
@@ -22,6 +22,6 @@ services:
     env_file:
       - ../startup/backend.env
     environment:
-      - DATABANK_API_URL=http://databank-api:8000
+      - DATABANK_API_URL=http://databank_api:8000
     depends_on:
       - databank-api
