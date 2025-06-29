@@ -166,7 +166,7 @@ const handleSubmit = async e => {
     });
 
     console.log('Upload succeeded:', resp.data);
-    setMessage('Upload succeeded!');
+    setUploadStatus('Upload succeeded!');
     
     if (resp.data.pullUrl) {
       setPullRequestUrl(resp.data.pullUrl);
@@ -176,7 +176,6 @@ const handleSubmit = async e => {
     const errorMsg = err.response?.data?.error ?? err.message;
     console.error('Upload error', err.response?.status, err.response?.data || err);
     setUploadStatus(`Upload failed: ${errorMsg}`);
-    setMessage(`Upload failed: ${errorMsg}`);
   }
 };
 
