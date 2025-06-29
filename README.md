@@ -2,9 +2,9 @@
 
 This repository contains a full-stack application adding new simulation info files to the Bilayer data repository on github.
 
-* **Databank API** – a Flask/Gunicorn service serving composition data from the Databank library
-* **Portal Backend** – a Flask/Gunicorn service that provides authenticated endpoints for file uploads and user authentitcation through github and proxies to the Databank API
 * **Frontend** – a React single-page app served by Nginx
+* **Github Gateway** – a Flask/Gunicorn service that provides authenticated endpoints for file uploads and user authentitcation through github and proxies to the Databank API
+* **Databank API** – a Flask/Gunicorn service serving composition data from the Databank library
 
 ---
 
@@ -19,7 +19,7 @@ This repository contains a full-stack application adding new simulation info fil
 4. [Services](#services)
 
    * [Databank API](#databank-api)
-   * [Portal Backend](#portal-backend)
+   * [Github Gateway](#github_gateway)
    * [Frontend](#frontend)
 5. [Deployment](#deployment)
 
@@ -42,7 +42,7 @@ This repository contains a full-stack application adding new simulation info fil
 
 Github Gateway and Databank APi are run in Docker containers on a shared Docker network.
 
-Nginx makes all traffic directed towards /app/ go to the Portal-Backend.
+Nginx makes all traffic directed towards /app/ go to the Github Gateway.
 
 Communication towards the Databank Api container is done exclusively through the Github Gateway.
 
@@ -96,9 +96,9 @@ docker-compose up
 
 This will:
 
-* Build the images for the Databank API and Portal Backend
+* Build the images for the Databank API and Github Gateway
 * Start the Databank API on port **8000**
-* Start the Portal Backend on port **5001**
+* Start the Github Gateway on port **5001**
 
 To stop and remove containers:
 
@@ -206,7 +206,7 @@ server {
     location / {
         try_files $uri /index.html;
     }
-    #Sends all traffic from /app/ to github_portal container.
+    #Sends all traffic from /app/ to Github Gateway container.
     location /app/ {
         proxy_pass http://localhost:5001;
         proxy_set_header Host $host;
@@ -216,6 +216,6 @@ server {
 ```
 
 * Static React build served from `/var/www/frontend/build`
-* API requests under `/app/` proxied to the Portal Backend
+* API requests under `/app/` proxied to the Github Gateway
 
 ---
