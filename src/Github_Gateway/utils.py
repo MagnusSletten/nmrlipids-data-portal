@@ -45,6 +45,7 @@ def is_input_valid(info_yaml_dict: dict) -> bool:
     Validates the provided YAML dict via the Databank API.
     Returns True if valid, False otherwise.
     """
+    print(f"Validating info yml")
     resp = requests.post(
         f"{databank_api_url}/info-valid-check", json=info_yaml_dict
     )
@@ -114,6 +115,7 @@ def branch_out(base_branch: str) -> str:
 
 
 def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
+    print(f"Pushing to repository with data from {username}")
     new_branch = branch_out(WORK_BASE_BRANCH)
     yaml_text  = yaml.safe_dump(data, sort_keys=False, width=120)
     path       = f"UserData/info.yml"
@@ -207,6 +209,7 @@ def user_has_push_access(user_token: str, repo_full_name: str) -> bool:
         gh_srv = Github(GITHUB_SERVER_AUTH_TOKEN)
         repo    = gh_srv.get_repo(repo_full_name)
         perm    = repo.get_collaborator_permission(username)  # "read","write","admin","none"
+        print(f"User {username} has permissions: {perm}")
     except Exception:
         return False
 
