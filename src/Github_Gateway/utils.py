@@ -6,6 +6,7 @@ import requests
 from github import Github
 from github import Auth
 from flask import current_app as app 
+import logging
 
 # Base URL for Databank API which is reference to running container
 databank_api_url = os.getenv("DATABANK_API_URL", "http://databank_api:8000")
@@ -20,7 +21,7 @@ GITHUB_SERVER_AUTH_TOKEN = os.getenv("GITHUB_SERVER_AUTH_TOKEN")
 gh_work   = Github(GITHUB_TOKEN)
 repo_work = gh_work.get_repo(f"{WORK_REPO_NAME}")
 gh_target= Github(GITHUB_TARGET_TOKEN)
-
+logger = logging.getLogger('gunicorn.error')
 
 def get_composition_names():
     """
@@ -46,7 +47,7 @@ def is_input_valid(info_yaml_dict: dict) -> bool:
     Validates the provided YAML dict via the Databank API.
     Returns True if valid, False otherwise.
     """
-    app.logger.info(f"Validating info yml")
+    logger.info(f"Validating info yml")
     resp = requests.post(
         f"{databank_api_url}/info-valid-check", json=info_yaml_dict
     )
@@ -116,7 +117,7 @@ def branch_out(base_branch: str) -> str:
 
 
 def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
-    app.logger.info(f"Pushing to repository with data from {username}")
+    logger.info(f"Pushing to repository with data from {username}")
     new_branch = branch_out(WORK_BASE_BRANCH)
     yaml_text  = yaml.safe_dump(data, sort_keys=False, width=120)
     path       = f"UserData/info.yml"
@@ -210,7 +211,7 @@ def user_has_push_access(user_token: str, repo_full_name: str) -> bool:
         gh_srv = Github(GITHUB_SERVER_AUTH_TOKEN)
         repo    = gh_srv.get_repo(repo_full_name)
         perm    = repo.get_collaborator_permission(username)  # "read","write","admin","none"
-        app.logger.info(f"User {username} has permissions: {perm}")
+        logger.info(f"User {username} has permissions: {perm}")
     except Exception:
         return False
 

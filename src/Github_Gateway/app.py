@@ -11,10 +11,14 @@ from requests.auth import HTTPBasicAuth
 import base64
 from github import Github
 from github import Auth
+import logging
+
+
 
 app = Flask(__name__)
 CORS(app)
-
+logger = logging.getLogger('gunicorn.error')
+logger.setLevel(logging.INFO)
 # Constants
 
 ClientID =  "Ov23liS8svKowq4uyPcG"
@@ -134,7 +138,7 @@ def upload_file():
         return jsonify({'error': 'Malformed or empty JSON body'}), 400
 
     user_name   = data.pop('userName', None)
-    app.logger.info(f"User name: {user_name}")
+    logger.info(f"User name: {user_name}")
     base_branch = data.pop('branch',   None)
     if not user_name or not base_branch:
         return jsonify({'error': 'Missing userName or branch in JSON'}), 400
