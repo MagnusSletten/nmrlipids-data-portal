@@ -25,7 +25,7 @@ ClientID =  "Ov23liS8svKowq4uyPcG"
 ClientSecret = os.getenv("clientsecret")
 jwt_key = os.getenv("jwtkey")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-authentication_repository="MagnusSletten/Databank"
+authentication_repository="NMRLipids/Databank"
 
 
 @app.route('/app/awake', methods=['GET','OPTIONS'])
