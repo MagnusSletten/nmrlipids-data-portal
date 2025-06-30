@@ -210,6 +210,7 @@ def user_has_push_access(user_token: str, repo_full_name: str) -> bool:
     try:
         gh_srv = Github(GITHUB_SERVER_AUTH_TOKEN)
         repo    = gh_srv.get_repo(repo_full_name)
+        logger.info(f"Repository name for permission check: {repo} ")
         perm    = repo.get_collaborator_permission(username)  # "read","write","admin","none"
         logger.info(f"User {username} has permissions: {perm}")
     except Exception:
