@@ -134,7 +134,7 @@ def upload_file():
         return jsonify({'error': 'Malformed or empty JSON body'}), 400
 
     user_name   = data.pop('userName', None)
-    print(f"User name: {user_name}")
+    app.logger.info(f"User name: {user_name}")
     base_branch = data.pop('branch',   None)
     if not user_name or not base_branch:
         return jsonify({'error': 'Missing userName or branch in JSON'}), 400
