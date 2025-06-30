@@ -18,7 +18,7 @@ RUN apt-get update \
  && chown runner:runner /app
 
 # 2) Copy in your portal backend source
-COPY --chown=runner:runner src/Backend /app/backend
+COPY --chown=runner:runner src/Github_Gateway /app/backend
 
 # 3) As root: install your requirements & clone Databank
 USER root

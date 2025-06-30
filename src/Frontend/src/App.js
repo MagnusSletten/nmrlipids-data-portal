@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
-import logo from './logo.svg';
 import BranchSelect from './BranchSelect';
 import Description from './Description';
 import { useImmer } from 'use-immer';
@@ -25,13 +24,14 @@ export default function App() {
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
 );
-  const [loggedInMessage, setLoggedInMessage] = useState('');
+  const [loggedInMessage, setLoggedInMessage] = useState(null);
   const [userName, setUserName] = useState('');
   const [branch, setBranch] = useState('main');
   const [message, setMessage] = useState('Fill in the form');
   const [pullRequestUrl, setPullRequestUrl] = useState(null);
   const [refreshMessage, setRefreshMessage] = useState('');
   const [compositionList, setCompositionList] = useState([]);
+  const [uploadStatus, setUploadStatus] = useState(null);
 
   // Fetch the up‐to‐date molecule list on mount
   useEffect(() => {
@@ -111,7 +111,8 @@ useEffect(() => {
           const { token, username, admin_status } = res.data;
           localStorage.githubToken = token;
           localStorage.username   = username;
-          localStorage.adminStatus = adminStatus; 
+          localStorage.setItem('adminStatus', admin_status.toString());
+          setAdminStatus(admin_status)
           setLoggedIn(true);
           setLoggedInMessage(`Logged in as ${username}`);
           setAdminStatus(admin_status);     
@@ -130,18 +131,18 @@ useEffect(() => {
     localStorage.clear();
     setLoggedIn(false);
     setAdminStatus(false)
-    setLoggedInMessage('');
+    setLoggedInMessage(null);
     setMessage('Fill in the form');
     setUserName('');
     setBranch('main');
     setPullRequestUrl(null);
+    setUploadStatus(null);
     setData({
     DOI: '', SOFTWARE: '',TRJ: '',TPR: '',PREEQTIME: 0,TIMELEFTOUT: 0,DIR_WRK: '', UNITEDATOM_DICT: '', TYPEOFSYSTEM: '',
     SYSTEM: '', PUBLICATION: '',AUTHORS_CONTACT: '', BATCHID: '', SOFTWARE_VERSION: '', FF: '', FF_SOURCE: '',
     FF_DATE: '', CPT: '', LOG: '', TOP: '', EDR: '', COMPOSITION: {}
     });
   };
-
 
 
 const handleSubmit = async e => {
@@ -153,7 +154,8 @@ const handleSubmit = async e => {
     branch
   };
 
-  console.log( 'Sending payload:', jsonPayload);
+  console.log('Sending payload:', jsonPayload);
+  setUploadStatus('Uploading data…');
 
   try {
     const resp = await axios.post('/app/upload', jsonPayload, {
@@ -162,26 +164,25 @@ const handleSubmit = async e => {
         Authorization: `Bearer ${localStorage.githubToken}`
       }
     });
+
     console.log('Upload succeeded:', resp.data);
-    setMessage('Upload succeeded!');
+    setUploadStatus('Upload succeeded!');
+    
     if (resp.data.pullUrl) {
-     setPullRequestUrl(resp.data.pullUrl);
+      setPullRequestUrl(resp.data.pullUrl);
     }
+
   } catch (err) {
-    if (err.response) {
-      console.error('Server responded with:', err.response.status, err.response.data);
-      setMessage(`Upload failed: ${err.response.data.error}`);
-    } else {
-      console.error('Network or other error', err);
-      setMessage(`Upload failed: ${err.message}`);
-    }
+    const errorMsg = err.response?.data?.error ?? err.message;
+    console.error('Upload error', err.response?.status, err.response?.data || err);
+    setUploadStatus(`Upload failed: ${errorMsg}`);
   }
 };
 
 return (
   <div className="Container">
     <div className="Left">
-      {loggedIn && localStorage.adminStatus && (
+      {loggedIn && adminStatus && (
         <div className="Admin-panel">
           <h3> Administration panel </h3>
           <div className="refresh-panel">
@@ -198,9 +199,7 @@ return (
       <header className="App-header">
         <h1>Welcome to the NMRLipids Upload Portal</h1>
       </header>
-
           {!loggedIn && (
-            
        <> 
         <button
             onClick={githubLogin}
@@ -208,14 +207,12 @@ return (
           >
             GitHub Login
           </button>
-
          <h3>Information</h3>
          <div className="info-block">
          <p>Please log in with GitHub to upload data.</p>
          <p>GitHub login is currently used as a way to authenticate users and reduce spam.</p>
          <p>The login process authorizes the app to access your public information, specifically your username. Nothing else.</p>
         </div>
-         
         </>
       )}
 
@@ -241,7 +238,6 @@ return (
               data={data}
               onChange={handleChange}
             />
-
             <CompositionEditor
               options={compositionList}
               composition={data.COMPOSITION}
@@ -251,21 +247,22 @@ return (
                 })
               }
             />
-
             <div className="submit-row">
               <button type="submit" className="button">
                 Submit
               </button>
-
+              {uploadStatus && (
+              <p className="upload-status" style={{ marginRight: '1em' }}>
+                {uploadStatus}
+              </p>
+            )}
               {pullRequestUrl && (
                 <a
                   href={pullRequestUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="button"
-                >
-                  View Pull Request
-                </a>
+                >View Pull Request</a>
               )}
             </div>
           </form>
@@ -291,8 +288,6 @@ return (
     </button>
   )}
   <Description />
-
-  
 </div>
 </div>
 );

@@ -158,7 +158,12 @@ html, body {
   margin-top: 1.5rem;       /* space above */
 }
 .submit-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 20% auto 30%;
   align-items: center;
+  
+}
+
+.upload-status {
+  text-align: center;
 }
