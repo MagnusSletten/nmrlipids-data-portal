@@ -163,6 +163,7 @@ def create_pull_request(
         head=head_ref,
         base=base_branch
     )
+    pr.add_to_labels('skip-updateIDs')
 
     return pr.html_url
 
