@@ -46,6 +46,8 @@ Nginx makes all traffic directed towards /app/ go to the Github Gateway.
 
 Communication towards the Databank Api container is done exclusively through the Github Gateway.
 
+Authentication is done via Github's API through a registered a Github Oauth application.  
+
 ---
 
 ## Prerequisites
@@ -65,13 +67,9 @@ There are more depedencies within related projects, i.e nmrlipids/databank but t
 
 Create a `backend.env` file with your secrets inside a backend startup folder located right outside the clone of this repository within `startup/backend.env`
 
-```ini
-# backend.env
-clientsecret=example_client_secret
-GITHUB_TOKEN=example_github_token
-GITHUB_TARGET_TOKEN=example_github_target_token
-GITHUB_SERVER_AUTH_TOKEN=example_server_auth_token
-```
+An example env file is located within this repository here:
+`src\Configuration\example-env-file.txt` and it will list all required evironmental txt files. 
+
 The docker compose file, if not changed, will look for it in  `../startup/backend.env`
 
 ```text
@@ -181,41 +179,7 @@ Place server blocks in `/etc/nginx/sites-available/project.conf`:
 
 (SSL certificates should be managed before changing this file accordingly)
 
-```nginx
-
-# First block here routes all HTTP traffic for your domain to HTTPS
-server {
-    listen 80;
-    server_name (DOMAIN NAME);
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name (DOMAIN NAME);
-
-    ssl_certificate     /etc/ssl/certs/your_domain.crt;
-    ssl_certificate_key /etc/ssl/private/your_domain.key;
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_prefer_server_ciphers on;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
-
-    root /var/www/frontend/build;
-    index index.html;
-
-    location / {
-        try_files $uri /index.html;
-    }
-    #Sends all traffic from /app/ to Github Gateway container.
-    location /app/ {
-        proxy_pass http://localhost:5001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-* Static React build served from `/var/www/frontend/build`
-* API requests under `/app/` proxied to the Github Gateway
+Example of the Nginx block is found in this repository at the following location: 
+`src\Configuration\nginx_config.conf`
 
 ---

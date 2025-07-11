@@ -4,16 +4,15 @@ import os, yaml, time
 import sys 
 import requests 
 from github import Github
-from github import Auth
 from flask import current_app as app 
 import logging
 
 # Base URL for Databank API which is reference to running container
 databank_api_url = os.getenv("DATABANK_API_URL", "http://databank_api:8000")
 
-WORK_REPO_NAME = 'MagnusSletten/BilayerData' #Where data is originally uploaded
+WORK_REPO_NAME = os.getenv('WORK_REPO_NAME') #Where data is originally uploaded
 WORK_BASE_BRANCH = 'main' # A branch will be created based on this branch
-PULL_REQUEST_TARGET_REPO = 'MagnusPriv/BilayerData' 
+PULL_REQUEST_TARGET_REPO = os.getenv('PULL_REQUEST_TARGET_REPO')
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_TARGET_TOKEN = os.getenv("GITHUB_TARGET_TOKEN")
 GITHUB_SERVER_AUTH_TOKEN = os.getenv("GITHUB_SERVER_AUTH_TOKEN")
@@ -22,6 +21,7 @@ gh_work   = Github(GITHUB_TOKEN)
 repo_work = gh_work.get_repo(f"{WORK_REPO_NAME}")
 gh_target= Github(GITHUB_TARGET_TOKEN)
 logger = logging.getLogger('gunicorn.error')
+
 
 def get_composition_names():
     """
@@ -55,6 +55,44 @@ def is_input_valid(info_yaml_dict: dict) -> bool:
         return True
     return False
 
+def branch_out(base_branch: str) -> str:
+    ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+    new_branch = f"bot/info_yaml_{ts}"
+
+    # 1) Get the commit SHA of the base branch
+    source = repo_work.get_branch(base_branch)
+    sha    = source.commit.sha
+
+    # 2) Create the new branch ref
+    repo_work.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
+
+    return new_branch
+
+def sync_and_branch(base_branch: str = WORK_BASE_BRANCH) -> str:
+    """
+    Fast-forwards the work repo's `base_branch` to match its upstream,
+    then creates and returns a new timestamped branch off that tip.
+    """
+    ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+    new_branch = f"bot/info_yaml_{ts}"
+
+    # Sync fork/main from upstream using full repo name direct
+    try:
+        gh_work._Github__requester.requestJson(
+            "POST",
+            f"/repos/{WORK_REPO_NAME}/merge-upstream",
+            input={"branch": base_branch}
+        )
+    except Exception as e:
+        logger.error(f"Failed to sync upstream for {WORK_REPO_NAME}: {e}")
+        raise
+
+    sha = repo_work.get_branch(base_branch).commit.sha
+    repo_work.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
+    logger.info(f"Synced {base_branch} and created branch {new_branch}")
+
+    return new_branch
+
 
 def run_command(command, error_message="Command failed", working_dir=None):
     try:
@@ -86,39 +124,10 @@ def git_pull():
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while updating Git: {e}")
 
-def update_databank():
-    """
-    Pulls the latest changes in the Databank repo,
-    based on the DATABANK_PATH environment variable.
-    """
-    path = os.getenv("DATABANK_PATH")
-    if not path:
-        print("Error: DATABANK_PATH environment variable not set", file=sys.stderr)
-        sys.exit(1)
-
-    run_command(
-        "git pull --recurse-submodules",
-        error_message="Failed to pull updates for Databank",
-        working_dir=path
-    )
-
-def branch_out(base_branch: str) -> str:
-    ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
-    new_branch = f"bot/info_yaml_{ts}"
-
-    # 1) Get the commit SHA of the base branch
-    source = repo_work.get_branch(base_branch)
-    sha    = source.commit.sha
-
-    # 2) Create the new branch ref
-    repo_work.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
-
-    return new_branch
-
 
 def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
     logger.info(f"Pushing to repository with data from {username}")
-    new_branch = branch_out(WORK_BASE_BRANCH)
+    new_branch = sync_and_branch(WORK_BASE_BRANCH)
     yaml_text  = yaml.safe_dump(data, sort_keys=False, width=120)
     path       = f"UserData/info.yml"
     message    = f"Add info.yml from {username}"
@@ -163,6 +172,7 @@ def create_pull_request(
         head=head_ref,
         base=base_branch
     )
+    pr.add_to_labels('skip-updateIDs')
 
     return pr.html_url
 
@@ -196,17 +206,17 @@ def create_pull_request_to_target(
 
 def user_has_push_access(user_token: str, repo_full_name: str) -> bool:
     """
-    Given a user’s OAuth token, verify they have write/admin rights
+    Given a user's OAuth token, verify they have write/admin rights
     on `repo_full_name` by checking collaborator permissions.
     """
-    # 1) get the username from their token
+    #Get username from their token
     try:
         gh_user = Github(user_token)
         username = gh_user.get_user().login
     except Exception:
         return False
 
-    # 2) ask GitHub (with our server token) about their permission
+    #Use GitHub to check permission
     try:
         gh_srv = Github(GITHUB_SERVER_AUTH_TOKEN)
         repo    = gh_srv.get_repo(repo_full_name)

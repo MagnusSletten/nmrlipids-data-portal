@@ -3,14 +3,9 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import utils
-from utils import get_composition_names,refresh_composition_file,user_has_push_access, update_databank
-import json
+from utils import get_composition_names,refresh_composition_file,user_has_push_access
 import requests 
-import jwt
 from requests.auth import HTTPBasicAuth
-import base64
-from github import Github
-from github import Auth
 import logging
 
 
@@ -32,8 +27,12 @@ authentication_repository="NMRLipids/Databank"
 def awake():
     return "<h1> Server is awake!<h1>", 200
 
+
 @app.route('/app/verifyCode', methods=['POST', 'OPTIONS'])
 def verifyCode():
+    """
+    Endpoint to check users permissions with Github, runs after user has logged  in.
+    """
 
     if request.method == 'OPTIONS':
        return '', 200
@@ -78,8 +77,12 @@ def verifyCode():
         "admin_status": admin_status
     })
 
+
 @app.route('/app/refresh-composition', methods=['POST'])
 def updateCompositionList():
+    """
+    #Endpoint for refreshing molcule lists for compositions
+    """
     auth = request.headers.get('Authorization','')
     if not auth.startswith('Bearer '):
         return jsonify(error="Missing token"), 401
@@ -88,18 +91,22 @@ def updateCompositionList():
     if not user_has_push_access(user_token, authentication_repository):
         return jsonify(error="Insufficient privileges"), 403
 
-    # now safe to refresh…
     count = refresh_composition_file()
     return jsonify(success=True, count=count), 200
 
 
-
 @app.route('/app/molecules', methods=['GET'])
 def list_molecules_root():
+    """
+    #Endpoint to retrieve list of molecules
+    """
     return jsonify(get_composition_names()), 200
 
 
 def authorizeToken(access_token):
+    """
+    #Method for checking validity of user token. 
+    """
     url = f"https://api.github.com/applications/{ClientID}/token"
     headers = {"Accept": "application/vnd.github+json"}
     data = {"access_token": access_token}
@@ -118,9 +125,12 @@ def authorizeToken(access_token):
 
     except Exception as e:
         return None, str(e), 500
- 
+
 @app.route('/app/upload', methods=['POST'])
 def upload_file():
+    """
+    #Endpoint to upload info.yml file to repository 
+    """
     token_pre = request.headers.get('authorization')
     token = token_pre.split(' ')[1] if token_pre and " " in token_pre else None
 
