@@ -167,3 +167,10 @@ html, body {
 .upload-status {
   text-align: center;
 }
+
+.mapping-select {
+  width: 180px;          
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

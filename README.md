@@ -86,11 +86,12 @@ This can be changed to preferred location in the `docker-compose.yml` file.
 
 ### Docker Compose (will only start backend services)
 
-Bring up all services:
+Bring up all services in detatched mode:
 
 ```bash
-docker-compose up 
+docker-compose up -d 
 ```
+Removing -d from the command would start the containers attached and stream their logs live in your terminal.
 
 This will:
 
@@ -175,7 +176,7 @@ If you want a different Node deployment location it can be changed within the `s
 
 For HTTPS traffic with a specific domain. 
 
-Place server blocks in `/etc/nginx/sites-available/project.conf`:
+Place server blocks in `/etc/nginx/sites-available/upload-portal.conf`:
 
 (SSL certificates should be managed before changing this file accordingly)
 

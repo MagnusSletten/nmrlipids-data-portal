@@ -27,7 +27,7 @@ def get_composition_names():
     """
     Fetches the list of composition names from the Databank API.
     """
-    resp = requests.get(f"{databank_api_url}/compositions")
+    resp = requests.get(f"{databank_api_url}/api/compositions")
     resp.raise_for_status()
     return resp.json()
 
@@ -53,6 +53,12 @@ def is_input_valid(info_yaml_dict: dict) -> bool:
     )
     if resp.status_code == 200:
         return True
+    try:
+        err = resp.json().get("error", resp.text)
+    except ValueError:
+        err = resp.text
+    logger.error(f"Validation failed: {err}")
+
     return False
 
 def branch_out(base_branch: str) -> str:
@@ -172,7 +178,6 @@ def create_pull_request(
         head=head_ref,
         base=base_branch
     )
-    pr.add_to_labels('skip-updateIDs')
 
     return pr.html_url
 

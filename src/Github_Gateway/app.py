@@ -23,12 +23,12 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 authentication_repository="NMRLipids/Databank"
 
 
-@app.route('/app/awake', methods=['GET','OPTIONS'])
+@app.route('/awake', methods=['GET','OPTIONS'])
 def awake():
     return "<h1> Server is awake!<h1>", 200
 
 
-@app.route('/app/verifyCode', methods=['POST', 'OPTIONS'])
+@app.route('/verifyCode', methods=['POST', 'OPTIONS'])
 def verifyCode():
     """
     Endpoint to check users permissions with Github, runs after user has logged  in.
@@ -78,7 +78,7 @@ def verifyCode():
     })
 
 
-@app.route('/app/refresh-composition', methods=['POST'])
+@app.route('/user-admin-check', methods=['POST'])
 def updateCompositionList():
     """
     #Endpoint for refreshing molcule lists for compositions
@@ -91,16 +91,8 @@ def updateCompositionList():
     if not user_has_push_access(user_token, authentication_repository):
         return jsonify(error="Insufficient privileges"), 403
 
-    count = refresh_composition_file()
-    return jsonify(success=True, count=count), 200
+    return jsonify(authorized=True), 200
 
-
-@app.route('/app/molecules', methods=['GET'])
-def list_molecules_root():
-    """
-    #Endpoint to retrieve list of molecules
-    """
-    return jsonify(get_composition_names()), 200
 
 
 def authorizeToken(access_token):
@@ -126,7 +118,7 @@ def authorizeToken(access_token):
     except Exception as e:
         return None, str(e), 500
 
-@app.route('/app/upload', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload_file():
     """
     #Endpoint to upload info.yml file to repository 
@@ -160,9 +152,13 @@ def upload_file():
 
     url = utils.create_pull_request_to_target(
         head_ref=commit_branch,
-        title= f"Simulation files from {user_name}",
-        body=f"Processing of simulation data will happen after approval")
+        title=f"Upload Portal: Simulation files from {user_name}",
+        body=f"""\
+This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
 
+Processing of simulation data will happen after approval.
+"""
+)
     return jsonify(message="Uploaded!", pullUrl=url), 200
  
 

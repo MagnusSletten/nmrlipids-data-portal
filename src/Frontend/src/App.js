@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 import BranchSelect from './BranchSelect';
@@ -6,18 +6,13 @@ import Description from './Description';
 import { useImmer } from 'use-immer';
 import CompositionEditor from './CompositionEditor';
 import ScalarFields    from './ScalarFields';
-
-// Scalar fields
-const scalarFields = [
-  'DOI','SOFTWARE','TRJ','TPR','PREEQTIME','TIMELEFTOUT','DIR_WRK',
-  'UNITEDATOM_DICT','TYPEOFSYSTEM','SYSTEM','PUBLICATION','TEMPERATURE','AUTHORS_CONTACT',
-  'BATCHID','SOFTWARE_VERSION','FF','FF_SOURCE','FF_DATE','CPT','LOG','TOP','GRO','EDR',
-];
+import fieldConfig from './FieldConfig';
 
 
 export default function App() {
   const ClientID = 'Ov23liS8svKowq4uyPcG';
   const IP = '/app/';
+  const API_PATH = '/api/'; 
 
   /* Auth & User */
   const [loggedIn, setLoggedIn] = useState(false);
@@ -32,24 +27,40 @@ export default function App() {
   const [refreshMessage, setRefreshMessage] = useState('');
   const [compositionList, setCompositionList] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
+  const mappingDict = JSON.parse(
+  localStorage.getItem('mappingDict') || '{}'
+);
 
   // Fetch the up‐to‐date molecule list on mount
   useEffect(() => {
-    axios.get(`${IP}molecules`)
+    axios.get(`${API_PATH}molecules`)
       .then(res => setCompositionList(res.data))
       .catch(err => console.error("Failed to load molecules:", err));
   }, []);
 
+useEffect(() => {
+  axios.get(`${API_PATH}mappings`)
+    .then(res => {
+      localStorage.setItem('mappingDict', JSON.stringify(res.data));
+    })
+    .catch(err => console.error("Failed to load mappings:", err));
+}, []);  
+
+const [chosenMappingKey, setChosenMappingKey] = useState(() => {
+    const keys = Object.keys(mappingDict);
+    return keys.length > 0 ? keys[0] : '';
+  });
+
 const updateComposition = async () => {
   try {
     await axios.post(
-      `${IP}refresh-composition`,
+      `${API_PATH}refresh-compositions`,
       {},
       { headers: { Authorization: `Bearer ${localStorage.githubToken}` } }
     );
     setRefreshMessage('Composition list updated successfully');
     // re-fetch updated list
-    const resp = await axios.get(`${IP}molecules`);
+    const resp = await axios.get(`${API_PATH}molecules`);
     setCompositionList(resp.data);
   } catch (err) {
     if (err.response?.status === 403) {
@@ -68,14 +79,12 @@ const [data, setData] = useImmer({
   SOFTWARE: null,
   PREEQTIME: null,
   TIMELEFTOUT: null,
-  DIR_WRK: null,
   UNITEDATOM_DICT: null,
   TYPEOFSYSTEM: null,
   TEMPERATURE: null,
   SYSTEM: null,
   PUBLICATION: null,
   AUTHORS_CONTACT: null,
-  BATCHID: null,
   SOFTWARE_VERSION: null,
   FF: null,
   FF_SOURCE: null,
@@ -91,7 +100,13 @@ const [data, setData] = useImmer({
 // 1) change any scalar
 const handleChange = e => {
   const { name, value } = e.target;
-  setData(draft => { draft[name] = value.trimEnd() });
+  const { type, trim } = fieldConfig[name];
+  let val = value;
+  if (trim) val = val.trim();
+  let parsed = val;
+  if (type === 'integer') parsed = val === '' ? '' : parseInt(val, 10);
+  else if (type === 'float') parsed = val === '' ? '' : parseFloat(val);
+  setData(draft => { draft[name] = parsed; });
 };
 
 
@@ -137,19 +152,31 @@ useEffect(() => {
     setBranch('main');
     setPullRequestUrl(null);
     setUploadStatus(null);
-    setData({
-    DOI: '', SOFTWARE: '',TRJ: '',TPR: '',PREEQTIME: 0,TIMELEFTOUT: 0,DIR_WRK: '', UNITEDATOM_DICT: '', TYPEOFSYSTEM: '',
-    SYSTEM: '', PUBLICATION: '',AUTHORS_CONTACT: '', BATCHID: '', SOFTWARE_VERSION: '', FF: '', FF_SOURCE: '',
-    FF_DATE: '', CPT: '', LOG: '', TOP: '', EDR: '', COMPOSITION: {}
-    });
-  };
-
+    setData(draft => {
+      Object.keys(fieldConfig).forEach(key => {
+        draft[key] = null;
+      });
+      draft.COMPOSITION = {};
+    }); 
+  }
+    
 
 const handleSubmit = async e => {
   e.preventDefault();
 
+  const filteredData = Object.fromEntries(
+  Object.entries(data).filter(([_, v]) => {
+    if (v === null || v === "") return false;
+    if (Array.isArray(v) && v.length === 0) return false;
+    if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0)
+      return false;
+    return true;
+  })
+  );
+
+
   const jsonPayload = {
-    ...data,
+    ...filteredData,
     userName,
     branch
   };
@@ -233,13 +260,14 @@ return (
           {message && <p className="status-message-centered">Status: {message}</p>}
 
           <form onSubmit={handleSubmit} className="upload-form">
-            <ScalarFields
-              fields={scalarFields}
-              data={data}
-              onChange={handleChange}
-            />
+              <ScalarFields
+                data={data}
+                onChange={handleChange}
+                fieldConfig={fieldConfig}
+              />
             <CompositionEditor
               options={compositionList}
+              mappingDict={mappingDict}  
               composition={data.COMPOSITION}
               setComposition={recipe =>
                 setData(draft => {
