@@ -3,25 +3,93 @@ import subprocess
 import os, yaml, time
 import sys 
 import requests 
-from github import Github
+from github import Github,GithubIntegration
+from github.Repository import Repository
 from flask import current_app as app 
 import logging
+from datetime import datetime, timedelta,timezone
 
+#Constants:
 # Base URL for Databank API which is reference to running container
 databank_api_url = os.getenv("DATABANK_API_URL", "http://databank_api:8000")
 
 WORK_REPO_NAME = os.getenv('WORK_REPO_NAME') #Where data is originally uploaded
 WORK_BASE_BRANCH = 'main' # A branch will be created based on this branch
 PULL_REQUEST_TARGET_REPO = os.getenv('PULL_REQUEST_TARGET_REPO')
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-GITHUB_TARGET_TOKEN = os.getenv("GITHUB_TARGET_TOKEN")
-GITHUB_SERVER_AUTH_TOKEN = os.getenv("GITHUB_SERVER_AUTH_TOKEN")
+APP_ID      = int(os.getenv("GITHUB_APP_ID"))
+PRIVATE_KEY = os.getenv("GITHUB_APP_PRIVATE_KEY_PEM")  
+integration = GithubIntegration(APP_ID, PRIVATE_KEY)
 
-gh_work   = Github(GITHUB_TOKEN)
-repo_work = gh_work.get_repo(f"{WORK_REPO_NAME}")
-gh_target= Github(GITHUB_TARGET_TOKEN)
+
 logger = logging.getLogger('gunicorn.error')
 
+#Caching the tokens which are valid for 1 hour
+token_cache = {
+    WORK_REPO_NAME: {
+        "token":   None,
+        "expires": datetime.min.replace(tzinfo=timezone.utc),
+        "client":  None,
+        "repo":    None
+    },
+    PULL_REQUEST_TARGET_REPO: {
+        "token":   None,
+        "expires": datetime.min.replace(tzinfo=timezone.utc),
+        "client":  None,
+        "repo":    None
+    },
+}
+
+def get_github_client_and_repo(repo_full_name: str):
+    """
+    Returns (client, repo) for repo_full_name, caching both until just
+    before the token expires (5-minute buffer). Mints a fresh token 
+    and repo object only when needed.
+    """
+    cache = token_cache[repo_full_name]
+    now   = datetime.now(timezone.utc)
+    
+    if cache["token"] is None or now + timedelta(minutes=5) >= cache["expires"]:
+        # mint new token and rebuild client+repo
+        owner, repo = repo_full_name.split("/", 1)
+        installation = integration.get_installation(owner, repo)
+        tok          = integration.get_access_token(installation.id)
+        
+        client = Github(tok.token)
+        repo_obj = client.get_repo(repo_full_name)
+        
+        cache.update({
+            "token":   tok.token,
+            "expires": tok.expires_at,
+            "client":  client,
+            "repo":    repo_obj
+        })
+        logger.info(f"[GitHub App] Refreshed token for {repo_full_name}")
+    else:
+        logger.info(f"[GitHub App] Reusing cached client for {repo_full_name}. Remaining lifetime: {cache['expires']-now}")
+
+    return cache["client"], cache["repo"]
+
+
+
+def get_gh_work() -> Github:
+    "Returns a GitHub client for the work repo"
+    client, _ = get_github_client_and_repo(WORK_REPO_NAME)
+    return client
+
+def get_repo_work() -> Repository:
+    "Return Github repo object for the work repo"
+    _, repo = get_github_client_and_repo(WORK_REPO_NAME)
+    return repo
+
+def get_gh_target() -> Github:
+    "Returns a GitHub client for the target repo"
+    client, _ = get_github_client_and_repo(PULL_REQUEST_TARGET_REPO)
+    return client
+
+def get_repo_target() -> Repository:
+    "Return Github repo object for the work repo"
+    _, repo = get_github_client_and_repo(PULL_REQUEST_TARGET_REPO)
+    return repo
 
 def get_composition_names():
     """
@@ -65,12 +133,10 @@ def branch_out(base_branch: str) -> str:
     ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
     new_branch = f"bot/info_yaml_{ts}"
 
-    # 1) Get the commit SHA of the base branch
-    source = repo_work.get_branch(base_branch)
+    repo = get_repo_work()
+    source = repo.get_branch(base_branch)
     sha    = source.commit.sha
-
-    # 2) Create the new branch ref
-    repo_work.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
+    repo.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
 
     return new_branch
 
@@ -81,10 +147,9 @@ def sync_and_branch(base_branch: str = WORK_BASE_BRANCH) -> str:
     """
     ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
     new_branch = f"bot/info_yaml_{ts}"
-
-    # Sync fork/main from upstream using full repo name direct
+    repo_work = get_repo_work()
     try:
-        gh_work._Github__requester.requestJson(
+        get_gh_work()._Github__requester.requestJson(
             "POST",
             f"/repos/{WORK_REPO_NAME}/merge-upstream",
             input={"branch": base_branch}
@@ -92,7 +157,7 @@ def sync_and_branch(base_branch: str = WORK_BASE_BRANCH) -> str:
     except Exception as e:
         logger.error(f"Failed to sync upstream for {WORK_REPO_NAME}: {e}")
         raise
-
+    
     sha = repo_work.get_branch(base_branch).commit.sha
     repo_work.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
     logger.info(f"Synced {base_branch} and created branch {new_branch}")
@@ -108,29 +173,6 @@ def run_command(command, error_message="Command failed", working_dir=None):
         sys.exit(1)
 
 
-
-def git_setup(name="NMRlipids_File_Upload", email="nmrlipids_bot@github.com"):
-    """
-    Configures Git with a specific user name and email.
-    """
-    try:
-        # Set Git user name
-        subprocess.run(["git", "config", "--global", "user.name", name], check=True)
-        
-        # Set Git user email
-        subprocess.run(["git", "config", "--global", "user.email", email], check=True)
-        
-        print("Git configuration set successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while setting Git configuration: {e}")
-
-def git_pull():
-    try:
-        subprocess.run(["git", "pull"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while updating Git: {e}")
-
-
 def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
     logger.info(f"Pushing to repository with data from {username}")
     new_branch = sync_and_branch(WORK_BASE_BRANCH)
@@ -138,81 +180,45 @@ def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
     path       = f"UserData/info.yml"
     message    = f"Add info.yml from {username}"
 
-    response = repo_work.create_file(
+    response = get_repo_work().create_file(
         path=path,
         message=message,
         content=yaml_text,
         branch=new_branch
     )
 
-    # Extract the ContentFile object and its HTML URL
     content_file = response['content']
     commit_html_url = content_file.html_url
     return commit_html_url, new_branch
 
-def create_pull_request(
-    gh,                      # Authenticated Github client with write permissions to the target repository
-    head_ref: str,           # Fully qualified head ref, e.g. "owner:branch"
-    title: str,
-    body: str = "",
-    base_branch: str = WORK_BASE_BRANCH,
-    target_owner: str = "", # Owner or org of the target repo
-    target_repo: str = ""   # Name of the target repository
-) -> str:
+def create_pull_request_to_target(head_branch: str, title: str, body: str = "") -> str:
     """
-    Create a pull request from head_ref into target_owner/target_repo:base_branch.
-    The provided `gh` client must be authenticated with a token that has push and pull request
-    creation privileges on the target repository.
+    Creates a pull request from WORK_REPO_NAME:head_branch 
+    into PULL_REQUEST_TARGET_REPO:WORK_BASE_BRANCH.
     Returns the URL of the new PR.
     """
-    # Construct full repository name
-    target_fullname = f"{target_owner}/{target_repo}"
+    # Build the fully-qualified head ref
+    source_owner = WORK_REPO_NAME.split("/", 1)[0]
+    fq_head      = f"{source_owner}:{head_branch}"
 
-    # Get the target repository object
-    repo_obj = gh.get_repo(target_fullname)
+    # Get the target repo via the App installation
+    repo = get_repo_target()
 
-    # Create the pull request
-    pr = repo_obj.create_pull(
-        title=title,
-        body=body,
-        head=head_ref,
-        base=base_branch
+    # Create the PR (no maintainer-can-modify handshake)
+    pr = repo.create_pull(
+        title                 = title,
+        body                  = body,
+        head                  = fq_head,
+        base                  = WORK_BASE_BRANCH,
+        maintainer_can_modify = False
     )
-
     return pr.html_url
 
-def create_pull_request_to_target(
-    head_ref: str,
-    title: str,
-    body: str = '',
-    base_branch: str = WORK_BASE_BRANCH
-) -> str:
-    # Parse owner/repo for target
-    target_owner, target_repo = PULL_REQUEST_TARGET_REPO.split('/')
 
-    # Parse the owner of your fork/work repo
-    source_owner = WORK_REPO_NAME.split('/')[0]
-
-    # Fully qualified head: "MagnusSletten:bot/info_yaml_…"
-    fq_head = f"{source_owner}:{head_ref}"
-
-    # Delegate to the generic helper
-    return create_pull_request(
-        gh=gh_target,
-        head_ref=fq_head,
-        title=title,
-        body=body,
-        base_branch=base_branch,
-        target_owner=target_owner,
-        target_repo=target_repo
-    )
-
-
-
-def user_has_push_access(user_token: str, repo_full_name: str) -> bool:
+def user_has_push_access(user_token: str) -> bool:
     """
     Given a user's OAuth token, verify they have write/admin rights
-    on `repo_full_name` by checking collaborator permissions.
+    on the pull request target repo by checking collaborator permissions.
     """
     #Get username from their token
     try:
@@ -223,8 +229,7 @@ def user_has_push_access(user_token: str, repo_full_name: str) -> bool:
 
     #Use GitHub to check permission
     try:
-        gh_srv = Github(GITHUB_SERVER_AUTH_TOKEN)
-        repo    = gh_srv.get_repo(repo_full_name)
+        repo    = get_repo_target()
         logger.info(f"Repository name for permission check: {repo} ")
         perm    = repo.get_collaborator_permission(username)  # "read","write","admin","none"
         logger.info(f"User {username} has permissions: {perm}")

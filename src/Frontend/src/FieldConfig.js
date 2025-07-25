@@ -7,7 +7,6 @@ const fieldConfig = {
   TIMELEFTOUT:       { type: 'integer', trim: false, required: true  },
   SYSTEM:            { type: 'string',  trim: true,  required: true  },
   PUBLICATION:       { type: 'string',  trim: true,  required: false },
-  UNITEDATOM_DICT:   { type: 'string',  trim: true,  required: false },
   TYPEOFSYSTEM:      { type: 'string',  trim: true,  required: false },
   TEMPERATURE:       { type: 'float',   trim: false, required: false },
   AUTHORS_CONTACT:   { type: 'string',  trim: false, required: false },

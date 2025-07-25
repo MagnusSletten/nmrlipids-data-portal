@@ -7,6 +7,7 @@ import { useImmer } from 'use-immer';
 import CompositionEditor from './CompositionEditor';
 import ScalarFields    from './ScalarFields';
 import fieldConfig from './FieldConfig';
+import UnitedAtomDictEditor from './UnitedAtomDictEditor';
 
 
 export default function App() {
@@ -27,6 +28,9 @@ export default function App() {
   const [refreshMessage, setRefreshMessage] = useState('');
   const [compositionList, setCompositionList] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
+  const [dictEntries, setDictEntries] = useState([]);
+  
+
   const mappingDict = JSON.parse(
   localStorage.getItem('mappingDict') || '{}'
 );
@@ -46,10 +50,6 @@ useEffect(() => {
     .catch(err => console.error("Failed to load mappings:", err));
 }, []);  
 
-const [chosenMappingKey, setChosenMappingKey] = useState(() => {
-    const keys = Object.keys(mappingDict);
-    return keys.length > 0 ? keys[0] : '';
-  });
 
 const updateComposition = async () => {
   try {
@@ -79,7 +79,7 @@ const [data, setData] = useImmer({
   SOFTWARE: null,
   PREEQTIME: null,
   TIMELEFTOUT: null,
-  UNITEDATOM_DICT: null,
+  UNITEDATOM_DICT: {},
   TYPEOFSYSTEM: null,
   TEMPERATURE: null,
   SYSTEM: null,
@@ -97,7 +97,7 @@ const [data, setData] = useImmer({
   COMPOSITION: {}
 });
 
-// 1) change any scalar
+
 const handleChange = e => {
   const { name, value } = e.target;
   const { type, trim } = fieldConfig[name];
@@ -264,35 +264,37 @@ return (
                 data={data}
                 onChange={handleChange}
                 fieldConfig={fieldConfig}
+                />
+              <UnitedAtomDictEditor data={data} setData={setData} />
+
+              <CompositionEditor
+                options={compositionList}
+                mappingDict={mappingDict}  
+                composition={data.COMPOSITION}
+                setComposition={recipe =>
+                  setData(draft => {
+                    recipe(draft.COMPOSITION);
+                  })
+                }
               />
-            <CompositionEditor
-              options={compositionList}
-              mappingDict={mappingDict}  
-              composition={data.COMPOSITION}
-              setComposition={recipe =>
-                setData(draft => {
-                  recipe(draft.COMPOSITION);
-                })
-              }
-            />
-            <div className="submit-row">
-              <button type="submit" className="button">
-                Submit
-              </button>
-              {uploadStatus && (
-              <p className="upload-status" style={{ marginRight: '1em' }}>
-                {uploadStatus}
-              </p>
-            )}
-              {pullRequestUrl && (
-                <a
-                  href={pullRequestUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="button"
-                >View Pull Request</a>
+              <div className="submit-row">
+                <button type="submit" className="button">
+                  Submit
+                </button>
+                {uploadStatus && (
+                <p className="upload-status" style={{ marginRight: '1em' }}>
+                  {uploadStatus}
+                </p>
               )}
-            </div>
+                {pullRequestUrl && (
+                  <a
+                    href={pullRequestUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="button"
+                  >View Pull Request</a>
+                )}
+              </div>
           </form>
                 {/* Simple text link to docs */}
          <p className="docs-link">

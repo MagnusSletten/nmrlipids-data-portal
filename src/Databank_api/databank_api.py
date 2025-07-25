@@ -164,6 +164,7 @@ def is_input_valid():
 def health_check():
     return jsonify(status="ok"), 200
 
+# Initial setup, runs when gunicorn imports this app:
 pull_latest()
 refresh_composition_file()
 build_mapping_dict(NMLDB_MOL_PATH)

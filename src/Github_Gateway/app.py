@@ -1,9 +1,9 @@
 # app.py
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import utils
-from utils import get_composition_names,refresh_composition_file,user_has_push_access
+from utils import refresh_composition_file,user_has_push_access
 import requests 
 from requests.auth import HTTPBasicAuth
 import logging
@@ -14,13 +14,12 @@ app = Flask(__name__)
 CORS(app)
 logger = logging.getLogger('gunicorn.error')
 logger.setLevel(logging.INFO)
-# Constants
 
-ClientID =  "Ov23liS8svKowq4uyPcG"
-ClientSecret = os.getenv("clientsecret")
-jwt_key = os.getenv("jwtkey")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-authentication_repository="NMRLipids/Databank"
+#Constants
+
+#Oauth-app credentials for nmrlipids-user-authenticator 
+ClientID =  os.getenv("oauth_id")
+ClientSecret = os.getenv("oauth_secret")
 
 
 @app.route('/awake', methods=['GET','OPTIONS'])
@@ -65,10 +64,7 @@ def verifyCode():
     username = user_info.get("login")
 
     # Check their push/admin access on the repo
-    admin_status = user_has_push_access(
-        access_token,
-        authentication_repository
-    )
+    admin_status = user_has_push_access(access_token)
 
     return jsonify({
         "authenticated": True,
@@ -88,7 +84,7 @@ def updateCompositionList():
         return jsonify(error="Missing token"), 401
     user_token = auth.split()[1]
 
-    if not user_has_push_access(user_token, authentication_repository):
+    if not user_has_push_access(user_token):
         return jsonify(error="Insufficient privileges"), 403
 
     return jsonify(authorized=True), 200
@@ -151,7 +147,7 @@ def upload_file():
     commit_url,commit_branch = utils.push_to_repo_yaml(data,user_name)
 
     url = utils.create_pull_request_to_target(
-        head_ref=commit_branch,
+        head_branch=commit_branch,
         title=f"Upload Portal: Simulation files from {user_name}",
         body=f"""\
 This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
@@ -163,13 +159,6 @@ Processing of simulation data will happen after approval.
  
 
 if __name__ == '__main__':
-    if not ClientSecret:
-        raise ValueError("Missing client secret in environment!")
-    utils.git_setup()
-    utils.git_pull()
-    # point at the real static folder
-    static_dir = os.path.join(os.path.dirname(__file__), 'static')
-    refresh_composition_file(static_dir)
     app.run(host='0.0.0.0', port=5001, debug=False)
 
 
