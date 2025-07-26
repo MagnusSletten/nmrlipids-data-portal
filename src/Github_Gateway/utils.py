@@ -60,9 +60,9 @@ def get_github_client_and_repo(repo_full_name: str):
             "client":  client,
             "repo":    repo_obj
         })
-        logger.info(f"[GitHub App] Refreshed token for {repo_full_name}")
+        logger.info(f"Refreshed token for {repo_full_name}")
     else:
-        logger.info(f"[GitHub App] Reusing cached client for {repo_full_name}. Remaining lifetime: {cache['expires']-now}")
+        logger.info(f"Reusing cached client for {repo_full_name}. Remaining lifetime: {cache['expires']-now}")
 
     return cache["client"], cache["repo"]
 
