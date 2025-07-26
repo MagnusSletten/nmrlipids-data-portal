@@ -32,18 +32,18 @@ This repository contains a full-stack application adding new simulation info fil
 ## Architecture
 
 ```text
-                               ─────────── Nginx ─────────────
-                               |                             |
-┌───────────────┐              |  ┌──────────────────┐       |
-│   Frontend    │ ────────────►|  │  Github Gateway  │       |
-│    (React)    │              |  └──────────────────┘       |
-└───────────────┘              |            ↑                |
-                               |            │                |
-                               |            ↓                |
-                               |  ┌──────────────────┐       |
-                               |  │   Databank API   │       |
-                               |  └──────────────────┘       |
-                               ───────────────────────────────
+                               ─────────── Nginx ───────
+                               |                        |
+┌───────────────┐              |  ┌──────────────────┐  |
+│   Frontend    │ ────────────►|  │  Github Gateway  │  |
+│    (React)    │              |  └──────────────────┘  |
+└───────────────┘              |            ↑           |
+                               |            │           |
+                               |            ↓           |
+                               |  ┌──────────────────┐  |
+                               |  │   Databank API   │  |
+                               |  └──────────────────┘  |
+                               ──────────────────────────
 ```
 
 Github Gateway and Databank API are run in Docker containers on a shared Docker network.
@@ -92,7 +92,11 @@ This can be changed to preferred location in the `docker-compose.yml` file.
 
 **CRITICALLY IMPORTANT**: the .env file with secrets should never be added to any github repository. This repository will automatically ignore all .env files, but it's still best practices to never put the `backend.env` inside it. 
 
-### Docker Compose (will only start backend services)
+### Docker Compose
+
+#### Starts backend services:
+
+(Note that the Docker Compose invocation depends on your setup: if you have the standalone binary, use docker-compose, but if you’re using the built-in plugin, use docker compose.)
 
 Bring up all services in detatched mode:
 
