@@ -3,6 +3,7 @@
 set -e  # Exit on any error
 
 echo "Building frontend..."
+cd src/Frontend
 npm run build
 
 echo "Removing old build on server..."
