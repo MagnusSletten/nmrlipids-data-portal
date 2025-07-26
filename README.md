@@ -164,16 +164,15 @@ Located under `src/Frontend`. Standard Create React App structure; built artifac
 
 ### Frontend Build & Deploy
 
-Use the helper script *from inside the `Frontend` folder*. 
+Use the helper script: build_frontend.sh
 
 Look at the deployment details within the script first: By default it will delete the contents of: `/var/www/frontend/build` then move the newly built files there. 
 
 ```bash
-cd src/Frontend
-build.sh
+./build_frontend.sh
 ```
 
-If you want a different Node deployment location it can be changed within the `src/Frontend/build.sh` script. 
+If you want a different Node deployment location it can be changed within the ` ./build_frontend.sh` script. 
 
 ### Nginx Configuration (Example)
 
