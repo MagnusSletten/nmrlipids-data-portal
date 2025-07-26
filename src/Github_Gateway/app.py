@@ -3,7 +3,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import utils
-from utils import refresh_composition_file,user_has_push_access
 import requests 
 from requests.auth import HTTPBasicAuth
 import logging
@@ -18,8 +17,8 @@ logger.setLevel(logging.INFO)
 #Constants
 
 #Oauth-app credentials for nmrlipids-user-authenticator 
-ClientID =  os.getenv("oauth_id")
-ClientSecret = os.getenv("oauth_secret")
+ClientID =  os.getenv("OAUTH_ID")
+ClientSecret = os.getenv("OAUTH_SECRET")
 
 
 @app.route('/awake', methods=['GET','OPTIONS'])
@@ -64,7 +63,7 @@ def verifyCode():
     username = user_info.get("login")
 
     # Check their push/admin access on the repo
-    admin_status = user_has_push_access(access_token)
+    admin_status = utils.user_has_push_access(access_token)
 
     return jsonify({
         "authenticated": True,
@@ -75,7 +74,7 @@ def verifyCode():
 
 
 @app.route('/user-admin-check', methods=['POST'])
-def updateCompositionList():
+def user_admin_check():
     """
     #Endpoint for refreshing molcule lists for compositions
     """
@@ -84,7 +83,7 @@ def updateCompositionList():
         return jsonify(error="Missing token"), 401
     user_token = auth.split()[1]
 
-    if not user_has_push_access(user_token):
+    if not utils.user_has_push_access(user_token):
         return jsonify(error="Insufficient privileges"), 403
 
     return jsonify(authorized=True), 200

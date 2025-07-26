@@ -42,9 +42,7 @@ This repository contains a full-stack application adding new simulation info fil
 
 Github Gateway and Databank APi are run in Docker containers on a shared Docker network.
 
-Nginx makes all traffic directed towards /app/ go to the Github Gateway.
-
-Communication towards the Databank Api container is done exclusively through the Github Gateway.
+Nginx makes all traffic directed towards /app/ go to the Github Gateway and /api/ goes towards Databank API.
 
 Authentication is done via Github's API through a registered a Github Oauth application.  
 
@@ -127,10 +125,12 @@ docker system prune -a
 
 **Endpoints**:
 
-* `GET  /compositions`
-* `POST /refresh-compositions`
-* `POST /info-valid-check`
-* `GET  /health`
+* `GET  /api/molecules`
+* `POST /api/refresh-compositions`
+* `POST /api/info-valid-check`
+* `POST /refresh-mappings`
+* `GET  /api/health`
+* `GET /api/mappings-files`
 
 ### Github_gateway
 
@@ -145,8 +145,8 @@ docker system prune -a
 
 * `GET  /app/awake`
 * `POST /app/verifyCode`
+* `POST /app/user-admin-check`
 * `POST /app/refresh-composition`
-* `GET  /app/molecules`
 * `POST /app/upload`
 
 Uses Gunicorn with configurable worker count.

@@ -1,7 +1,5 @@
 # app.py
-import subprocess
 import os, yaml, time
-import sys 
 import requests 
 from github import Github,GithubIntegration
 from github.Repository import Repository
@@ -49,7 +47,6 @@ def get_github_client_and_repo(repo_full_name: str):
     now   = datetime.now(timezone.utc)
     
     if cache["token"] is None or now + timedelta(minutes=5) >= cache["expires"]:
-        # mint new token and rebuild client+repo
         owner, repo = repo_full_name.split("/", 1)
         installation = integration.get_installation(owner, repo)
         tok          = integration.get_access_token(installation.id)
@@ -90,24 +87,6 @@ def get_repo_target() -> Repository:
     "Return Github repo object for the work repo"
     _, repo = get_github_client_and_repo(PULL_REQUEST_TARGET_REPO)
     return repo
-
-def get_composition_names():
-    """
-    Fetches the list of composition names from the Databank API.
-    """
-    resp = requests.get(f"{databank_api_url}/api/compositions")
-    resp.raise_for_status()
-    return resp.json()
-
-
-def refresh_composition_file():
-    """
-    Triggers a refresh of the molecules.json via the Databank API and returns the refreshed count.
-    """
-    resp = requests.post(f"{databank_api_url}/refresh-compositions")
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get("refreshed")
 
 
 def is_input_valid(info_yaml_dict: dict) -> bool:
@@ -163,15 +142,6 @@ def sync_and_branch(base_branch: str = WORK_BASE_BRANCH) -> str:
     logger.info(f"Synced {base_branch} and created branch {new_branch}")
 
     return new_branch
-
-
-def run_command(command, error_message="Command failed", working_dir=None):
-    try:
-        subprocess.run(command, shell=True, check=True, cwd=working_dir)
-    except subprocess.CalledProcessError:
-        print(error_message)
-        sys.exit(1)
-
 
 def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
     logger.info(f"Pushing to repository with data from {username}")

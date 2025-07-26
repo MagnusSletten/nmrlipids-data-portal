@@ -26,11 +26,8 @@ export default function App() {
   const [message, setMessage] = useState('Fill in the form');
   const [pullRequestUrl, setPullRequestUrl] = useState(null);
   const [refreshMessage, setRefreshMessage] = useState('');
-  const [compositionList, setCompositionList] = useState([]);
+  const [moleculeList, setMoleculeList] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
-  const [dictEntries, setDictEntries] = useState([]);
-  
-
   const mappingDict = JSON.parse(
   localStorage.getItem('mappingDict') || '{}'
 );
@@ -38,12 +35,12 @@ export default function App() {
   // Fetch the up‐to‐date molecule list on mount
   useEffect(() => {
     axios.get(`${API_PATH}molecules`)
-      .then(res => setCompositionList(res.data))
+      .then(res => setMoleculeList(res.data))
       .catch(err => console.error("Failed to load molecules:", err));
   }, []);
 
 useEffect(() => {
-  axios.get(`${API_PATH}mappings`)
+  axios.get(`${API_PATH}mapping-files`)
     .then(res => {
       localStorage.setItem('mappingDict', JSON.stringify(res.data));
     })
@@ -51,20 +48,20 @@ useEffect(() => {
 }, []);  
 
 
-const updateComposition = async () => {
+const updateMolecules = async () => {
   try {
     await axios.post(
-      `${API_PATH}refresh-compositions`,
+      `${API_PATH}refresh-molecules`,
       {},
       { headers: { Authorization: `Bearer ${localStorage.githubToken}` } }
     );
-    setRefreshMessage('Composition list updated successfully');
+    setRefreshMessage('Molecule list updated successfully');
     // re-fetch updated list
     const resp = await axios.get(`${API_PATH}molecules`);
-    setCompositionList(resp.data);
+    setMoleculeList(resp.data);
   } catch (err) {
     if (err.response?.status === 403) {
-      setRefreshMessage('Not authorized');
+      setRefreshMessage('Not authorized to refresh molecules');
     } else {
       setRefreshMessage('Refresh failed');
     }
@@ -213,8 +210,8 @@ return (
         <div className="Admin-panel">
           <h3> Administration panel </h3>
           <div className="refresh-panel">
-            <button onClick={updateComposition} className="button secondary">
-              Update lipid list
+            <button onClick={updateMolecules} className="button secondary">
+              Update molecule list
             </button>
             {refreshMessage && <p className="centered">{refreshMessage}</p>}
           </div>
@@ -268,7 +265,7 @@ return (
               <UnitedAtomDictEditor data={data} setData={setData} />
 
               <CompositionEditor
-                options={compositionList}
+                options={moleculeList}
                 mappingDict={mappingDict}  
                 composition={data.COMPOSITION}
                 setComposition={recipe =>
@@ -317,7 +314,10 @@ return (
       Logout
     </button>
   )}
-  <Description />
+    {loggedIn && loggedInMessage && (
+   <p className="user-info">{loggedInMessage}</p>
+   )}
+
 </div>
 </div>
 );

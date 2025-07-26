@@ -13,7 +13,7 @@ DATABANK_PATH = os.getenv("DATABANK_PATH", "/app/Databank")
 # Local static folder for this service
 LOCAL_STATIC = os.getenv("LOCAL_STATIC", "/app/static")
 MOLECULE_FILE = os.path.join(LOCAL_STATIC, "molecules.json")
-MAPPING_FILE = os.path.join(LOCAL_STATIC,"mappings.json")
+MAPPING_FILE = os.path.join(LOCAL_STATIC,"mapping-files.json")
 GITHUB_GATEWAY_URL = os.getenv("GITHUB_GATEWAY_URL", "http://github_gateway:5001")
 
 
@@ -33,8 +33,8 @@ logging.basicConfig(
 logger = logging.getLogger("gunicorn.error")
 
 
-# Refresh composition file utility
 def pull_latest():
+    "Pulls latest changes from the Databank repository and updates submodules."
     logger.info("Pulling latest Databank repo and submodules")
     try:
         subprocess.run([
@@ -48,9 +48,9 @@ def pull_latest():
         logger.error("Failed to update Databank repository or its submodules: %s", e)
         abort(500, description="Failed to update Databank repository or its submodules")
 
-# Refresh composition file utility
-def refresh_composition_file():
-    logger.info("Refreshing composition file")
+def refresh_molecule_file():
+    "Refreshes the local molecules.json file with updated molecule names."
+    logger.info("Refreshing molecule file")
     pull_latest()
     importlib.reload(molecules)
 
@@ -66,7 +66,7 @@ def refresh_composition_file():
         json.dump(all_ids, f, indent=2)
     os.replace(tmp_path, out_path)
 
-    logger.info("Wrote %d compositions to %s", len(all_ids), MOLECULE_FILE)
+    logger.info("Wrote %d molecules to %s", len(all_ids), MOLECULE_FILE)
     return len(all_ids)
 
 # Build and persist mapping dict
@@ -90,29 +90,33 @@ def build_mapping_dict(base_path=NMLDB_MOL_PATH):
     os.replace(tmp, MAPPING_FILE)
 
     logger.info("Wrote %d mappings to %s", len(mapping_dict), MAPPING_FILE)
-    return mapping_dict
+    return len(mapping_dict)
 
-@app.route("/mappings", methods=["GET"])
+@app.route("/mapping-files", methods=["GET"])
 def list_mappings():
-    """Return cached mappings from mappings.json."""
+    """Return cached mapping files from mapping-files.json."""
     try:
         with open(MAPPING_FILE, "r") as fp:
             mapping_dict = json.load(fp)
     except FileNotFoundError as e:
-        logger.error("Mappings file not found: %s", MAPPING_FILE)
-        return jsonify({"error": "Mappings not available"}), 404
+        logger.error("Mapping file not found: %s", MAPPING_FILE)
+        return jsonify({"error": "Mapping file not available"}), 404
     return jsonify(mapping_dict), 200
 
-@app.route("/refresh-mappings", methods=["POST"])
-def refresh_mappings_endpoint():
+@app.route("/refresh-mapping-files", methods=["POST"])
+def refresh_mapping_files():
     """
-    POST /refresh-mappings – regenerates local mappings.json and returns count.
+    POST /refresh-mapping-files, regenerates local mapping-files.json and returns count.
     """
+    err = admin_check()
+    if err:
+        return err
+   
     count = build_mapping_dict()
     return jsonify(refreshed=count), 200
 
 @app.route('/molecules', methods=['GET'])
-def list_compositions():
+def list_molecules():
     """
     GET /molecules - returns local list of molecules.
     """
@@ -120,17 +124,26 @@ def list_compositions():
         names = json.load(f)
     return jsonify(names), 200
 
-@app.route('/refresh-compositions', methods=['POST'])
-def refresh_endpoint():
+@app.route('/refresh-molecules', methods=['POST'])
+def refresh_molecules():
     """
-    POST /refresh-compositions - regenerates local molecules.json and returns count.
+    POST /refresh-molecules - regenerates local molecules.json and returns count.
     """
+    err = admin_check()
+    if err:
+        return err
+   
+    logger.info("User authorized to refresh molecules")
+    count = refresh_molecule_file()
+    return jsonify(refreshed=count), 200
+
+def admin_check():
     auth = request.headers.get('Authorization', '')
     if not auth.startswith('Bearer '):
         return jsonify(error="Missing token"), 401
 
     headers = {'Authorization': auth}
-    logger.info("Checking user admin status prior to refreshing compoositions")
+    logger.info("Checking user admin status")
     resp = requests.post(f"{GITHUB_GATEWAY_URL}/user-admin-check", headers=headers)
     try:
         resp.raise_for_status()
@@ -141,12 +154,10 @@ def refresh_endpoint():
     data = resp.json()  
     if not data.get("authorized", False):
         return jsonify(error="Insufficient privileges"), 403
-    logger.info("User authorized to refresh compositions")
-    count = refresh_composition_file()
-    return jsonify(refreshed=count), 200
+    return None
 
 @app.route('/info-valid-check', methods=['POST'])
-def is_input_valid():
+def info_valid_check():
     """
     POST /info-valid-check - validates provided YAML dict.
     """
@@ -166,7 +177,7 @@ def health_check():
 
 # Initial setup, runs when gunicorn imports this app:
 pull_latest()
-refresh_composition_file()
+refresh_molecule_file()
 build_mapping_dict(NMLDB_MOL_PATH)
 
 if __name__ == '__main__':

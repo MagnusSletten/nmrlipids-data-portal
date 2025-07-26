@@ -50,6 +50,7 @@ html, body {
   align-items: flex-end;
   padding: 1rem;
   border-left: 1px solid #b0c4de;
+  gap: 0.5rem;
 }
 
 /* Header */
@@ -188,4 +189,11 @@ html, body {
 
 .united-dict-section > button {
   align-self: flex-start;
+}
+.user-info {
+  color: #0b3d91;
+  font-size: 1.25rem;
+  margin-top: auto;
+  margin-bottom: 1rem; 
+
 }
