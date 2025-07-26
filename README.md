@@ -6,7 +6,7 @@ This repository contains a full-stack application adding new simulation info fil
 * **Github Gateway** – a Flask/Gunicorn service that provides authenticated endpoints for file uploads and user authentitcation through github and proxies to the Databank API
 * **Databank API** – a Flask/Gunicorn service serving composition data from the Databank library
 
-If anything is unclear. feel free to reach out at: magnus_sletten@outlook.com
+If anything is unclear, feel free to reach out at: magnus_sletten@outlook.com
 
 ---
 
@@ -64,7 +64,7 @@ The Github App could also do the exact same authentication as the Github Oauth a
 
 * Docker & Docker Compose (v3.8+)
 * Node.js & npm 
-* Git (for building the Databank API image)
+* Git for cloning this repository
 * Nginx for handling secure HTTPS traffic. 
 
 There are more depedencies within related projects, i.e nmrlipids/databank but these are installed in docker images and not needed in local environment.

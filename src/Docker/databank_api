@@ -1,5 +1,5 @@
 # Databank API Dockerfile
-FROM python:3.11-slim
+FROM python:3.11.13-slim-bookworm
 
 # Build args for Databank repo
 ARG DATABANK_URL=https://github.com/NMRLipids/Databank
