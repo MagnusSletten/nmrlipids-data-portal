@@ -54,14 +54,14 @@ Authentication is done via Github's API through a registered a Github Oauth appl
 
 Changes to data repository is done with the help of a registered [Github App](https://github.com/apps/simulation-addition-helper). 
 
-The Github App could also do the exact same authentication as the Github Oauth app, but due to an unfortunate UI choice within Github apps the decision was made to keep both. See [this issue on Github](https://github.com/orgs/community/discussions/37117) for more information on this.
+The Github App could also do the exact same authentication as the Github Oauth app, but due to an unfortunate UI choice within Github apps the decision was made to keep both. See [this discussion on Github](https://github.com/orgs/community/discussions/37117) for more information on this.
 
 ---
 
 ## Prerequisites
 
 * Docker & Docker Compose (v3.8+)
-* Node.js & npm (for local frontend development)
+* Node.js & npm 
 * Git (for building the Databank API image)
 * Nginx for handling secure HTTPS traffic. 
 
