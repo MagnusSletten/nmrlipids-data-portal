@@ -1,9 +1,5 @@
 FROM python:3.11-slim
 
-# Build-time args
-ARG DATABANK_URL=https://github.com/MagnusSletten/Databank
-ARG DATABANK_BRANCH=main
-
 # Runtime environment
 ENV FLASK_ENV=production \
     DATABANK_PATH=/app/Databank
