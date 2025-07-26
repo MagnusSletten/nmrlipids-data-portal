@@ -1,3 +1,4 @@
+// Handles the composition dictionary within the data
 export default function CompositionEditor({ composition, setComposition, options, mappingDict }) {
   const handleLipidChange = (oldKey, newKey) => {
     setComposition(draft => {

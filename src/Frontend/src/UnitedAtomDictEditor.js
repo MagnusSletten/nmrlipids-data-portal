@@ -1,3 +1,5 @@
+// Handles UnitedAtomDict input 
+
 import { useEffect, useState } from 'react';
 
 export default function UnitedAtomDictEditor({ data, setData }) {

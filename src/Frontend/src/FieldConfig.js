@@ -1,3 +1,4 @@
+// Contains information about how each field should be handled
 const fieldConfig = {
   DOI:               { type: 'string',  trim: true,  required: true  },
   SOFTWARE:          { type: 'string',  trim: true,  required: true  },

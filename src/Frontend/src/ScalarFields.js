@@ -1,4 +1,4 @@
-
+// Builds html fields from the data
 export default function ScalarFields({ data, onChange,fieldConfig }) {
   return (
     <div className="scalar-fields">

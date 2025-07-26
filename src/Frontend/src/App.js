@@ -11,7 +11,8 @@ import UnitedAtomDictEditor from './UnitedAtomDictEditor';
 
 
 export default function App() {
-  const ClientID = 'Ov23liS8svKowq4uyPcG';
+  const ClientID = 'Ov23liS8svKowq4uyPcG'; 
+  const DataRepo = "MagnusSletten/BilayerData"
   const IP = '/app/';
   const API_PATH = '/api/'; 
 
@@ -32,22 +33,22 @@ export default function App() {
   localStorage.getItem('mappingDict') || '{}'
 );
 
-  // Fetch the up‐to‐date molecule list on mount
-  useEffect(() => {
+// Fetch the up‐to‐date molecule list on mount:
+ useEffect(() => {
     axios.get(`${API_PATH}molecules`)
       .then(res => setMoleculeList(res.data))
       .catch(err => console.error("Failed to load molecules:", err));
   }, []);
-
+// Fetch mapping files on mount
 useEffect(() => {
   axios.get(`${API_PATH}mapping-files`)
     .then(res => {
-      localStorage.setItem('mappingDict', JSON.stringify(res.data));
+      localStorage.setItem('mappingDict', JSON.stringify(res.data)); 
     })
     .catch(err => console.error("Failed to load mappings:", err));
 }, []);  
 
-
+// Function to update molecule list:
 const updateMolecules = async () => {
   try {
     await axios.post(
@@ -68,7 +69,7 @@ const updateMolecules = async () => {
   }
   };
 
-
+// Contains data for the form 
 const [data, setData] = useImmer({
   DOI: null,
   TRJ: null,
@@ -94,7 +95,7 @@ const [data, setData] = useImmer({
   COMPOSITION: {}
 });
 
-
+// Method to handle changes in form fields:
 const handleChange = e => {
   const { name, value } = e.target;
   const { type, trim } = fieldConfig[name];
@@ -107,7 +108,7 @@ const handleChange = e => {
 };
 
 
-
+// Handles process after url has been redirected back from Github:
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
@@ -134,11 +135,11 @@ useEffect(() => {
       .catch(() => setMessage('GitHub login failed'));
   }
 }, []);
-
+// Starts login process:
   const githubLogin = () => {
     window.location.assign(`https://github.com/login/oauth/authorize/?client_id=${ClientID}`);
   };
-
+// Handles logout process:
   const handleLogout = () => {
     localStorage.clear();
     setLoggedIn(false);
@@ -157,10 +158,10 @@ useEffect(() => {
     }); 
   }
     
-
+// Handles form submission:
 const handleSubmit = async e => {
   e.preventDefault();
-
+  // Removes null or empty values from data object:
   const filteredData = Object.fromEntries(
   Object.entries(data).filter(([_, v]) => {
     if (v === null || v === "") return false;
@@ -170,8 +171,7 @@ const handleSubmit = async e => {
     return true;
   })
   );
-
-
+  // Creates JSON payload from data
   const jsonPayload = {
     ...filteredData,
     userName,
@@ -253,6 +253,7 @@ return (
             selectedBranch={branch}
             setSelectedBranch={setBranch}
             setMessage={setMessage}
+            DataRepo={DataRepo}
           />
           {message && <p className="status-message-centered">Status: {message}</p>}
 
