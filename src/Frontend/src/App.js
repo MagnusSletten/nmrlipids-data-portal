@@ -15,7 +15,6 @@ export default function App() {
   const IP = '/app/';
   const API_PATH = '/api/'; 
 
-  /* Auth & User */
   const [loggedIn, setLoggedIn] = useState(false);
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
