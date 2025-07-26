@@ -6,6 +6,8 @@ This repository contains a full-stack application adding new simulation info fil
 * **Github Gateway** – a Flask/Gunicorn service that provides authenticated endpoints for file uploads and user authentitcation through github and proxies to the Databank API
 * **Databank API** – a Flask/Gunicorn service serving composition data from the Databank library
 
+If anything is unclear. feel free to reach out at: magnus_sletten@outlook.com
+
 ---
 
 ## Table of Contents
