@@ -32,7 +32,7 @@ This repository contains a full-stack application adding new simulation info fil
 ## Architecture
 
 ```text
-                              ─────────── Nginx ──────────────
+                               ─────────── Nginx ─────────────
                                |                             |
 ┌───────────────┐              |  ┌──────────────────┐       |
 │   Frontend    │ ────────────►|  │  Github Gateway  │       |
@@ -46,11 +46,15 @@ This repository contains a full-stack application adding new simulation info fil
                                ───────────────────────────────
 ```
 
-Github Gateway and Databank APi are run in Docker containers on a shared Docker network.
+Github Gateway and Databank API are run in Docker containers on a shared Docker network.
 
 Nginx makes all traffic directed towards /app/ go to the Github Gateway and /api/ goes towards Databank API.
 
-Authentication is done via Github's API through a registered a Github Oauth application.  
+Authentication is done via Github's API through a registered a Github Oauth application. 
+
+Changes to data repository is done with the help of a registered [Github App](https://github.com/apps/simulation-addition-helper). 
+
+The Github App could also do the exact same authentication as the Github Oauth app, but due to an unfortunate UI choice within Github apps the decision was made to keep both. See [this issue on Github](https://github.com/orgs/community/discussions/37117) for more information on this.
 
 ---
 
@@ -93,7 +97,7 @@ This can be changed to preferred location in the `docker-compose.yml` file.
 Bring up all services in detatched mode:
 
 ```bash
-docker-compose up -d 
+docker-compose up --build -d 
 ```
 Removing -d from the command would start the containers attached and stream their logs live in your terminal.
 
