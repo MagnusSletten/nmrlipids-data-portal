@@ -32,12 +32,18 @@ This repository contains a full-stack application adding new simulation info fil
 ## Architecture
 
 ```text
-┌──────────────────┐    ┌──────────────────┐     ┌──────────────────┐
-│    Frontend      │◄──►│  Github Gateway  │◄──► │   Databank API   │
-│ (React + Nginx)  │    │ (Flask/Gunicorn) │     │ (Flask/Gunicorn) │
-└──────────────────┘    └──────────────────┘     └──────────────────┘
-
-
+                              ─────────── Nginx ──────────────
+                               |                             |
+┌───────────────┐              |  ┌──────────────────┐       |
+│   Frontend    │ ────────────►|  │  Github Gateway  │       |
+│    (React)    │              |  └──────────────────┘       |
+└───────────────┘              |            ↑                |
+                               |            │                |
+                               |            ↓                |
+                               |  ┌──────────────────┐       |
+                               |  │   Databank API   │       |
+                               |  └──────────────────┘       |
+                               ───────────────────────────────
 ```
 
 Github Gateway and Databank APi are run in Docker containers on a shared Docker network.
@@ -116,40 +122,33 @@ docker system prune -a
 
 ### Databank API
 
-* **Image**: `nmrlipids/databank_api:latest`
-* **Port**: `8000`
-* **Env**:
-
-  * `DATABANK_PATH` – path to the cloned Databank repo inside the container
-  * `LOCAL_STATIC` – where `molecules.json` is written
+* **Image**: nmrlipids/databank_api:latest  
+* **Port**: 8000  
 
 **Endpoints**:
 
-* `GET  /api/molecules`
-* `POST /api/refresh-compositions`
-* `POST /api/info-valid-check`
-* `POST /refresh-mappings`
-* `GET  /api/health`
-* `GET /api/mappings-files`
+- GET  /api/health  
+- GET  /api/molecules  
+- GET  /api/mapping-files  
+- POST /api/refresh-molecules  
+- POST /api/refresh-mapping-files  
+- POST /api/info-valid-check  
 
-### Github_gateway
+---
 
-* **Image**: `nmrlipids/github_gateway:latest`
-* **Port**: `5001`
-* **Env**:
+### GitHub Gateway
 
-  * `DATABANK_API_URL` – e.g. `http://databank-api:8000`
-  * Plus GitHub/OAuth secrets via `env_file` as described above
+* **Image**: nmrlipids/github_gateway:latest  
+* **Port**: 5001  
 
 **Endpoints**:
 
-* `GET  /app/awake`
-* `POST /app/verifyCode`
-* `POST /app/user-admin-check`
-* `POST /app/refresh-composition`
-* `POST /app/upload`
+- GET  /app/awake  
+- POST /app/verifyCode  
+- POST /app/user-admin-check  
+- POST /app/refresh-composition  
+- POST /app/upload  
 
-Uses Gunicorn with configurable worker count.
 
 ### Frontend
 
