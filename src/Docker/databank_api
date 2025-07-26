@@ -21,9 +21,7 @@ RUN git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL
  && pip install --no-cache-dir -e Databank
 
 # Copy the API application
-COPY src/Databank_api/databank_api.py /app/databank_api.py
-COPY src/Databank_api/requirements.txt /app/requirements.txt
-COPY src/Databank_api/gunicorn_config.py /app/gunicorn_config.py
+COPY src/Databank_api/. /app/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
