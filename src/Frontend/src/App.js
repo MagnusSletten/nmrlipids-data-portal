@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 import BranchSelect from './BranchSelect';
-import Description from './Description';
 import { useImmer } from 'use-immer';
 import CompositionEditor from './CompositionEditor';
 import ScalarFields    from './ScalarFields';
