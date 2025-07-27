@@ -44,18 +44,29 @@ def verifyCode():
     }
 
     headers = {"Accept": "application/json"}
-    response = requests.post(url, data=payload, headers=headers)
-    data = response.json()
+
+    try:
+        resp = requests.post(url, data=payload, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as e:
+        logger.error("OAuth token exchange failed: %s", e)
+        return jsonify(error="GitHub OAuth exchange failed"), 502
+
     access_token = data.get("access_token")
 
     if not access_token:
         return jsonify({"authenticated": False}), 401
 
     # Get user info
-    user_info = requests.get(
-        "https://api.github.com/user",
-        headers={"Authorization": f"Bearer {access_token}"}
-    ).json()
+    try:
+        user_info = requests.get(
+            "https://api.github.com/user",
+            headers={"Authorization": f"Bearer {access_token}"}
+        ).json()
+    except requests.RequestException as e:
+        logger.error(f"Error retrieving GitHub user info: {e}")
+        return jsonify(error="Failed to fetch GitHub user info"), 502
     username = user_info.get("login")
 
     # Check their push/admin access on the repo
@@ -79,7 +90,12 @@ def user_admin_check():
         return jsonify(error="Missing token"), 401
     user_token = auth.split()[1]
 
-    if not utils.user_has_push_access(user_token):
+    try:
+        allowed = utils.user_has_push_access(user_token)
+    except Exception as e:
+        logger.exception("Admin check error")
+        return jsonify(error="Authorization service error"), 500
+    if not allowed:
         return jsonify(error="Insufficient privileges"), 403
 
     return jsonify(authorized=True), 200
@@ -139,17 +155,21 @@ def upload_file():
     if not utils.is_input_valid(data):
         return jsonify({'error': 'Validation of info.yml failed, check required keys'}), 400
 
-    commit_url,commit_branch = utils.push_to_repo_yaml(data,user_name)
+    try: 
+        commit_branch = utils.push_to_repo_yaml(data,user_name)
 
-    url = utils.create_pull_request_to_target(
-        head_branch=commit_branch,
-        title=f"Upload Portal: Simulation files from {user_name}",
-        body=f"""\
-This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
+        url = utils.create_pull_request_to_target(
+            head_branch=commit_branch,
+            title=f"Upload Portal: Simulation files from {user_name}",
+            body=f"""\
+    This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
 
-Processing of simulation data will happen after approval.
-"""
-)
+    Processing of simulation data will happen after approval.
+    """
+    )
+    except Exception as e:
+        logger.exception("Failed to push or create PR")
+        return jsonify(error="Failed to write to repository"), 500
     return jsonify(message="Uploaded!", pullUrl=url), 200
  
 

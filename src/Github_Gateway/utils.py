@@ -156,10 +156,7 @@ def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
         content=yaml_text,
         branch=new_branch
     )
-
-    content_file = response['content']
-    commit_html_url = content_file.html_url
-    return commit_html_url, new_branch
+    return new_branch
 
 def create_pull_request_to_target(head_branch: str, title: str, body: str = "") -> str:
     """
