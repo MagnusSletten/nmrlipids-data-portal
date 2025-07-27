@@ -181,7 +181,6 @@ const handleSubmit = async e => {
     branch
   };
 
-  console.log('Sending payload:', jsonPayload);
   setUploadStatus('Uploading data…');
 
   try {
@@ -192,7 +191,6 @@ const handleSubmit = async e => {
       }
     });
 
-    console.log('Upload succeeded:', resp.data);
     setUploadStatus('Upload succeeded!');
     
     if (resp.data.pullUrl) {
