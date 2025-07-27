@@ -21,20 +21,16 @@ ClientID =  os.getenv("OAUTH_ID")
 ClientSecret = os.getenv("OAUTH_SECRET")
 
 
-@app.route('/awake', methods=['GET','OPTIONS'])
+@app.route('/awake', methods=['GET'])
 def awake():
     return "<h1> Server is awake!<h1>", 200
 
 
-@app.route('/verifyCode', methods=['POST', 'OPTIONS'])
+@app.route('/verifyCode', methods=['POST'])
 def verifyCode():
     """
     Endpoint to check users permissions with Github, runs after user has logged  in.
     """
-
-    if request.method == 'OPTIONS':
-       return '', 200
-
     code = request.get_json().get("code")
     if not code:
         return jsonify({"error": "Missing code parameter"}), 400
