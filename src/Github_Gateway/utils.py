@@ -194,7 +194,8 @@ def user_has_push_access(user_token: str) -> bool:
     try:
         gh_user = Github(user_token)
         username = gh_user.get_user().login
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to retrieve GitHub user: {e}")
         return False
 
     #Use GitHub to check permission
@@ -203,7 +204,8 @@ def user_has_push_access(user_token: str) -> bool:
         logger.info(f"Repository name for permission check: {repo} ")
         perm    = repo.get_collaborator_permission(username)  # "read","write","admin","none"
         logger.info(f"User {username} has permissions: {perm}")
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Permission check failed for user {username}: {e}")
         return False
 
     return perm in ("write", "admin")

@@ -72,7 +72,7 @@ def verifyCode():
 @app.route('/user-admin-check', methods=['POST'])
 def user_admin_check():
     """
-    #Endpoint for refreshing molcule lists for compositions
+    #Endpoint for checking whether user is authorized to access administration panel
     """
     auth = request.headers.get('Authorization','')
     if not auth.startswith('Bearer '):
