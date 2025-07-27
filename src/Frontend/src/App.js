@@ -10,10 +10,10 @@ import UnitedAtomDictEditor from './UnitedAtomDictEditor';
 
 
 export default function App() {
-  const ClientID = 'Ov23liS8svKowq4uyPcG'; 
-  const DataRepo = "MagnusSletten/BilayerData"
-  const IP = '/app/';
-  const API_PATH = '/api/'; 
+  const OAUTH_ClientID = process.env.REACT_APP_OAUTH_CLIENT_ID;
+  const DataRepo = process.env.REACT_APP_DATA_REPO;
+  const GITHUB_GATEWAY_PATH = '/app/';
+  const API_PATH = '/api/';
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [adminStatus, setAdminStatus] = useState(
@@ -121,7 +121,7 @@ useEffect(() => {
     return;
   }
   if (code) {
-    axios.post(`${IP}verifyCode`, { code })
+    axios.post(`${GITHUB_GATEWAY_PATH}verifyCode`, { code })
       .then(res => {
         if (res.data.authenticated) {
           const { token, username, admin_status } = res.data;
@@ -140,7 +140,7 @@ useEffect(() => {
 }, []);
 // Starts login process:
   const githubLogin = () => {
-    window.location.assign(`https://github.com/login/oauth/authorize/?client_id=${ClientID}`);
+    window.location.assign(`https://github.com/login/oauth/authorize/?client_id=${OAUTH_ClientID}`);
   };
 // Handles logout process:
   const handleLogout = () => {

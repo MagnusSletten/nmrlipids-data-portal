@@ -27,7 +27,6 @@ If anything is unclear, feel free to reach out at: magnus_sletten@outlook.com
 
    * [Frontend Build & Deploy](#frontend-build--deploy)
    * [Nginx Configuration (Example)](#nginx-configuration-example)
-6. [License](#license)
 
 ---
 
@@ -93,6 +92,18 @@ Your-start-location/
 This can be changed to preferred location in the `docker-compose.yml` file.
 
 **CRITICALLY IMPORTANT**: the .env file with secrets should never be added to any github repository. This repository will automatically ignore all .env files, but it's still best practices to never put the `backend.env` inside it. 
+
+### Frontend Environment Variables
+
+Create a `.env` file in the project root (next to `package.json`) with your public config values. For example:
+
+```dotenv
+# .env
+REACT_APP_OAUTH_CLIENT_ID=Ov23liS8svKowq4uyPcG
+REACT_APP_DATA_REPO=MagnusSletten/BilayerData
+```
+Note: These values are baked into your build and exposed in the frontend bundle, so only include non‑sensitive configuration here.
+The OAUTH variable refers to the Github Oauth Client ID.
 
 ### Docker Compose
 

@@ -161,9 +161,9 @@ def upload_file():
             head_branch=commit_branch,
             title=f"Upload Portal: Simulation files from {user_name}",
             body=f"""\
-    This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
+This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
 
-    Processing of simulation data will happen after approval.
+Processing of simulation data will happen after approval.
     """
     )
     except Exception as e:
