@@ -46,7 +46,7 @@ def verifyCode():
     headers = {"Accept": "application/json"}
 
     try:
-        resp = requests.post(url, data=payload, headers=headers)
+        resp = requests.post(url, data=payload, headers=headers, timeout=8)
         resp.raise_for_status()
         data = resp.json()
     except requests.RequestException as e:
@@ -62,7 +62,7 @@ def verifyCode():
     try:
         user_info = requests.get(
             "https://api.github.com/user",
-            headers={"Authorization": f"Bearer {access_token}"}
+            headers={"Authorization": f"Bearer {access_token}"},timeout=8
         ).json()
     except requests.RequestException as e:
         logger.error(f"Error retrieving GitHub user info: {e}")
@@ -111,7 +111,7 @@ def authorizeToken(access_token):
     data = {"access_token": access_token}
 
     try:
-        response = requests.post(url, auth=HTTPBasicAuth(ClientID, ClientSecret), headers=headers, json=data)
+        response = requests.post(url, auth=HTTPBasicAuth(ClientID, ClientSecret), headers=headers, json=data,timeout=8)
         
         if response.status_code == 200:
             return response.json(), None, 200
@@ -137,8 +137,8 @@ def upload_file():
         return jsonify({'error': 'Missing or malformed Authorization header'}), 400
 
     response,error,err_code = authorizeToken(token)
-    if(error):
-        return error,err_code 
+    if error:
+        return jsonify(error=error), err_code
     if not request.is_json:
         return jsonify({'error': 'Content-Type must be application/json'}), 400
 
@@ -147,7 +147,6 @@ def upload_file():
         return jsonify({'error': 'Malformed or empty JSON body'}), 400
 
     user_name   = data.pop('userName', None)
-    logger.info(f"User name: {user_name}")
     base_branch = data.pop('branch',   None)
     if not user_name or not base_branch:
         return jsonify({'error': 'Missing userName or branch in JSON'}), 400

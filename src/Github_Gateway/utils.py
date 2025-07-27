@@ -96,7 +96,7 @@ def is_input_valid(info_yaml_dict: dict) -> bool:
     """
     logger.info(f"Validating info yml")
     resp = requests.post(
-        f"{databank_api_url}/info-valid-check", json=info_yaml_dict
+        f"{databank_api_url}/info-valid-check", json=info_yaml_dict,timeout=10
     )
     if resp.status_code == 200:
         return True

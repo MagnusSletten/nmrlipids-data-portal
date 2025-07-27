@@ -46,27 +46,32 @@ useEffect(() => {
     .catch(err => console.error("Failed to load mappings:", err));
 }, []);  
 
-// Function to update molecule list:
-const updateMolecules = async () => {
+// Function to update databank files:
+const updateDatabankFiles = async () => {
   try {
     await axios.post(
-      `${API_PATH}refresh-molecules`,
+      `${API_PATH}refresh-databank-files`,
       {},
       { headers: { Authorization: `Bearer ${localStorage.githubToken}` } }
     );
-    setRefreshMessage('Molecule list updated successfully');
-    // re-fetch updated list
+    setRefreshMessage('Databank files updated successfully');
+    // re-fetch updated lists
     const resp = await axios.get(`${API_PATH}molecules`);
     setMoleculeList(resp.data);
+    // re-fetch mapping file lists
+   axios.get(`${API_PATH}mapping-files`)
+    .then(res => {
+      localStorage.setItem('mappingDict', JSON.stringify(res.data)); 
+    })
+    .catch(err => console.error("Failed to load mappings:", err));  
   } catch (err) {
     if (err.response?.status === 403) {
-      setRefreshMessage('Not authorized to refresh molecules');
+      setRefreshMessage('Not authorized to refresh databank files');
     } else {
       setRefreshMessage('Refresh failed');
     }
   }
-  };
-
+}; 
 // Contains data for the form 
 const [data, setData] = useImmer({
   DOI: null,
@@ -208,8 +213,8 @@ return (
         <div className="Admin-panel">
           <h3> Administration panel </h3>
           <div className="refresh-panel">
-            <button onClick={updateMolecules} className="button secondary">
-              Update molecule list
+            <button onClick={updateDatabankFiles} className="button secondary">
+              Update databank files
             </button>
             {refreshMessage && <p className="centered">{refreshMessage}</p>}
           </div>

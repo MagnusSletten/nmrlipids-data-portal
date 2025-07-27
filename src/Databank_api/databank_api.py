@@ -46,12 +46,11 @@ def pull_latest():
         ], cwd=DATABANK_PATH, check=True)
     except subprocess.CalledProcessError as e:
         logger.error("Failed to update Databank repository or its submodules: %s", e)
-        abort(500, description="Failed to update Databank repository or its submodules")
+        raise 
 
 def refresh_molecule_file():
     "Refreshes the local molecules.json file with updated molecule names."
     logger.info("Refreshing molecule file")
-    pull_latest()
     importlib.reload(molecules)
 
     global lipids_set, molecules_set
@@ -103,17 +102,6 @@ def list_mappings():
         return jsonify({"error": "Mapping file not available"}), 404
     return jsonify(mapping_dict), 200
 
-@app.route("/refresh-mapping-files", methods=["POST"])
-def refresh_mapping_files():
-    """
-    POST /refresh-mapping-files, regenerates local mapping-files.json and returns count.
-    """
-    err = admin_check()
-    if err:
-        return err
-   
-    count = build_mapping_dict()
-    return jsonify(refreshed=count), 200
 
 @app.route('/molecules', methods=['GET'])
 def list_molecules():
@@ -124,18 +112,51 @@ def list_molecules():
         names = json.load(f)
     return jsonify(names), 200
 
-@app.route('/refresh-molecules', methods=['POST'])
-def refresh_molecules():
+@app.route("/refresh-databank-files", methods=["POST"])
+def refresh_databank_files():
     """
-    POST /refresh-molecules - regenerates local molecules.json and returns count.
+    Pulls latest Databank repo, updates submodules,
+    rebuilds molecules.json and mapping-files.json.
     """
+    #Permission check
     err = admin_check()
     if err:
         return err
-   
-    logger.info("User authorized to refresh molecules")
-    count = refresh_molecule_file()
-    return jsonify(refreshed=count), 200
+
+    #Pull & update submodules
+    try:
+        pull_latest()
+    except subprocess.CalledProcessError as e:
+        logger.exception("Git pull/submodule update failed")
+        return jsonify(error="Failed to pull Databank repository"), 500
+    except Exception as e:
+        logger.exception("Unexpected error during repo pull")
+        return jsonify(error="Error updating Databank repository"), 500
+
+    #Refresh molecules.json
+    try:
+        refresh_molecule_file()
+    except FileNotFoundError as e:
+        logger.exception("Molecules file path error")
+        return jsonify(error="Molecule file path invalid"), 500
+    except Exception as e:
+        logger.exception("Refreshing molecules failed")
+        return jsonify(error="Failed to refresh molecules list"), 500
+
+    #Rebuild mapping-files.json
+    try:
+        build_mapping_dict(NMLDB_MOL_PATH)
+    except FileNotFoundError as e:
+        logger.exception("Mapping directory missing")
+        return jsonify(error="Mapping source directory not found"), 500
+    except json.JSONDecodeError as e:
+        logger.exception("Error writing mapping JSON")
+        return jsonify(error="Failed to write mapping-files.json"), 500
+    except Exception as e:
+        logger.exception("Building mapping dict failed")
+        return jsonify(error="Failed to rebuild mapping dictionary"), 500
+
+    return jsonify(status="refreshed"), 200
 
 def admin_check():
     auth = request.headers.get('Authorization', '')
@@ -144,12 +165,15 @@ def admin_check():
 
     headers = {'Authorization': auth}
     logger.info("Checking user admin status")
-    resp = requests.post(f"{GITHUB_GATEWAY_URL}/user-admin-check", headers=headers)
     try:
+        resp = requests.post(f"{GITHUB_GATEWAY_URL}/user-admin-check", headers=headers,timeout=10)
         resp.raise_for_status()
     except requests.HTTPError as e:
         logger.error(f"User admin check failed, error: {e}")
         return jsonify(error=resp.json().get("error", str(e))), resp.status_code
+    except requests.RequestException as e:
+        logger.error("HTTP error during admin check: %s", e)
+        return jsonify(error="Could not reach admin‑check service"), 502
 
     data = resp.json()  
     if not data.get("authorized", False):
