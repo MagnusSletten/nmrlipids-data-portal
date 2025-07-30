@@ -156,7 +156,7 @@ def refresh_databank_files():
         logger.exception("Building mapping dict failed")
         return jsonify(error="Failed to rebuild mapping dictionary"), 500
 
-    return jsonify(status="refreshed"), 200
+    return jsonify(status="success"), 200
 
 def admin_check():
     auth = request.headers.get('Authorization', '')

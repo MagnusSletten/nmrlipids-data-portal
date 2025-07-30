@@ -16,7 +16,7 @@ WORK_BASE_BRANCH = 'main' # A branch will be created based on this branch
 PULL_REQUEST_TARGET_REPO = os.getenv('PULL_REQUEST_TARGET_REPO')
 APP_ID      = int(os.getenv("GITHUB_APP_ID"))
 PRIVATE_KEY = os.getenv("GITHUB_APP_PRIVATE_KEY_PEM")  
-integration = GithubIntegration(Auth.AppAuth(app_id=APP_ID,private_key=PRIVATE_KEY))
+integration = GithubIntegration(auth=Auth.AppAuth(app_id=APP_ID,private_key=PRIVATE_KEY))
 
 
 

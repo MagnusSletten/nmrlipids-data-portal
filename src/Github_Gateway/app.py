@@ -91,12 +91,12 @@ def authorizeToken(access_token):
     """
     #Method for checking validity of user token. 
     """
-    url = f"https://api.github.com/applications/{ClientID}/token"
+    url = f"https://api.github.com/applications/{OAUTH_ID}/token"
     headers = {"Accept": "application/vnd.github+json"}
     data = {"access_token": access_token}
 
     try:
-        response = requests.post(url, auth=HTTPBasicAuth(ClientID, ClientSecret), headers=headers, json=data,timeout=8)
+        response = requests.post(url, auth=HTTPBasicAuth(OAUTH_ID, OAUTH_SECRET), headers=headers, json=data,timeout=8)
         
         if response.status_code == 200:
             return response.json(), None, 200
