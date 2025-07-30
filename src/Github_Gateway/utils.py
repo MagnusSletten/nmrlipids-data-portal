@@ -1,7 +1,7 @@
 # app.py
 import os, yaml, time
 import requests 
-from github import Github,GithubIntegration
+from github import Github,GithubIntegration, Auth
 from github.Repository import Repository
 from flask import current_app as app 
 import logging
@@ -16,7 +16,8 @@ WORK_BASE_BRANCH = 'main' # A branch will be created based on this branch
 PULL_REQUEST_TARGET_REPO = os.getenv('PULL_REQUEST_TARGET_REPO')
 APP_ID      = int(os.getenv("GITHUB_APP_ID"))
 PRIVATE_KEY = os.getenv("GITHUB_APP_PRIVATE_KEY_PEM")  
-integration = GithubIntegration(APP_ID, PRIVATE_KEY)
+intergration = GithubIntegration(Auth.AppAuth(app_id=APP_ID,private_key=PRIVATE_KEY))
+
 
 
 logger = logging.getLogger('gunicorn.error')
