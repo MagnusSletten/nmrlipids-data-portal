@@ -5,6 +5,7 @@ import os
 import utils
 import requests 
 from requests.auth import HTTPBasicAuth
+from github import Github, GithubException
 import logging
 
 
@@ -17,9 +18,10 @@ logger.setLevel(logging.INFO)
 #Constants
 
 #Oauth-app credentials for nmrlipids-user-authenticator 
-ClientID =  os.getenv("OAUTH_ID")
-ClientSecret = os.getenv("OAUTH_SECRET")
-
+OAUTH_ID =  os.getenv("OAUTH_ID")
+OAUTH_SECRET = os.getenv("OAUTH_SECRET")
+gh = Github()
+oauth_app = gh.get_oauth_application(OAUTH_ID, OAUTH_SECRET)
 
 @app.route('/awake', methods=['GET'])
 def awake():
@@ -27,58 +29,41 @@ def awake():
 
 
 @app.route('/verifyCode', methods=['POST'])
-def verifyCode():
+def verify_code():
     """
-    Endpoint to check users permissions with Github, runs after user has logged  in.
+    Exchange the OAuth code for a user token, fetch their GitHub username,
+    and check push/admin access on the target repo.
     """
-    code = request.get_json().get("code")
+    try:
+        code = request.get_json().get("code")
+    except: 
+        logger.error("Error parsing JSON")
+        return jsonify({"error": "Error parsing JSON"}),400 
     if not code:
         return jsonify({"error": "Missing code parameter"}), 400
 
-    url = "https://github.com/login/oauth/access_token"
-
-    payload = {
-        "client_id": ClientID,
-        "client_secret": ClientSecret,
-        "code": code
-    }
-
-    headers = {"Accept": "application/json"}
-
     try:
-        resp = requests.post(url, data=payload, headers=headers, timeout=8)
-        resp.raise_for_status()
-        data = resp.json()
-    except requests.RequestException as e:
-        logger.error("OAuth token exchange failed: %s", e)
+        access_token = oauth_app.get_access_token(code).token
+        
+        user_gh = Github(login_or_token=access_token)
+        username = user_gh.get_user().login
+
+    except GithubException as e:
+        logger.error("OAuth exchange or user fetch failed: %s", e)
         return jsonify(error="GitHub OAuth exchange failed"), 502
 
-    access_token = data.get("access_token")
-
-    if not access_token:
-        return jsonify({"authenticated": False}), 401
-
-    # Get user info
     try:
-        user_info = requests.get(
-            "https://api.github.com/user",
-            headers={"Authorization": f"Bearer {access_token}"},timeout=8
-        ).json()
-    except requests.RequestException as e:
-        logger.error(f"Error retrieving GitHub user info: {e}")
-        return jsonify(error="Failed to fetch GitHub user info"), 502
-    username = user_info.get("login")
-
-    # Check their push/admin access on the repo
-    admin_status = utils.user_has_push_access(access_token)
+        admin_status = utils.user_has_push_access(access_token)
+    except Exception:
+        logger.exception("Error checking push access")
+        return jsonify(error="Authorization service error"), 500
 
     return jsonify({
         "authenticated": True,
         "token": access_token,
         "username": username,
         "admin_status": admin_status
-    })
-
+    }), 200
 
 @app.route('/user-admin-check', methods=['POST'])
 def user_admin_check():
