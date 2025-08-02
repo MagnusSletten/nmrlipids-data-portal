@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
@@ -7,8 +6,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from github import Github, GithubException
 import logging
-
-
+from api_return_standard import api_return
 
 app = Flask(__name__)
 CORS(app)
@@ -25,7 +23,7 @@ oauth_app = gh.get_oauth_application(OAUTH_ID, OAUTH_SECRET)
 
 @app.route('/awake', methods=['GET'])
 def awake():
-    return "<h1> Server is awake!<h1>", 200
+    return "<h1> Server is awake!<h1>"
 
 
 @app.route('/verifyCode', methods=['POST'])
@@ -36,34 +34,32 @@ def verify_code():
     """
     try:
         code = request.get_json().get("code")
-    except: 
+    except:
         logger.error("Error parsing JSON")
-        return jsonify({"error": "Error parsing JSON"}),400 
+        return api_return(error="Error parsing JSON", status=400)
     if not code:
-        return jsonify({"error": "Missing code parameter"}), 400
+        return api_return(error="Missing code parameter", status=400)
 
     try:
         access_token = oauth_app.get_access_token(code).token
-        
         user_gh = Github(login_or_token=access_token)
         username = user_gh.get_user().login
-
     except GithubException as e:
         logger.error("OAuth exchange or user fetch failed: %s", e)
-        return jsonify(error="GitHub OAuth exchange failed"), 502
+        return api_return(error="GitHub OAuth exchange failed", status=502)
 
     try:
         admin_status = utils.user_has_push_access(access_token)
     except Exception:
         logger.exception("Error checking push access")
-        return jsonify(error="Authorization service error"), 500
+        return api_return(error="Authorization service error", status=500)
 
-    return jsonify({
+    return api_return(payload={
         "authenticated": True,
         "token": access_token,
         "username": username,
         "admin_status": admin_status
-    }), 200
+    })
 
 @app.route('/user-admin-check', methods=['POST'])
 def user_admin_check():
@@ -72,19 +68,18 @@ def user_admin_check():
     """
     auth = request.headers.get('Authorization','')
     if not auth.startswith('Bearer '):
-        return jsonify(error="Missing token"), 401
+        return api_return(error="Missing token", status=401)
     user_token = auth.split()[1]
 
     try:
         allowed = utils.user_has_push_access(user_token)
     except Exception as e:
         logger.exception("Admin check error")
-        return jsonify(error="Authorization service error"), 500
+        return api_return(error="Authorization service error", status=500)
     if not allowed:
-        return jsonify(error="Insufficient privileges"), 403
+        return api_return(error="Insufficient privileges", status=403)
 
-    return jsonify(authorized=True), 200
-
+    return api_return(payload={"authorized": True})
 
 
 def authorizeToken(access_token):
@@ -96,8 +91,7 @@ def authorizeToken(access_token):
     data = {"access_token": access_token}
 
     try:
-        response = requests.post(url, auth=HTTPBasicAuth(OAUTH_ID, OAUTH_SECRET), headers=headers, json=data,timeout=8)
-        
+        response = requests.post(url, auth=HTTPBasicAuth(OAUTH_ID, OAUTH_SECRET), headers=headers, json=data, timeout=8)
         if response.status_code == 200:
             return response.json(), None, 200
         elif response.status_code == 404:
@@ -106,7 +100,6 @@ def authorizeToken(access_token):
             return None, "Bad credentials (check client_id and client_secret)", 401
         else:
             return None, f"Unexpected error: {response.text}", response.status_code
-
     except Exception as e:
         return None, str(e), 500
 
@@ -119,29 +112,28 @@ def upload_file():
     token = token_pre.split(' ')[1] if token_pre and " " in token_pre else None
 
     if not token:
-        return jsonify({'error': 'Missing or malformed Authorization header'}), 400
+        return api_return(error="Missing or malformed Authorization header", status=400)
 
-    response,error,err_code = authorizeToken(token)
+    response, error, err_code = authorizeToken(token)
     if error:
-        return jsonify(error=error), err_code
+        return api_return(error=error, status=err_code)
     if not request.is_json:
-        return jsonify({'error': 'Content-Type must be application/json'}), 400
+        return api_return(error="Content-Type must be application/json", status=400)
 
     data = request.get_json()
     if data is None:
-        return jsonify({'error': 'Malformed or empty JSON body'}), 400
+        return api_return(error="Malformed or empty JSON body", status=400)
 
     user_name   = data.pop('userName', None)
     base_branch = data.pop('branch',   None)
     if not user_name or not base_branch:
-        return jsonify({'error': 'Missing userName or branch in JSON'}), 400
+        return api_return(error="Missing userName or branch in JSON", status=400)
 
     if not utils.is_input_valid(data):
-        return jsonify({'error': 'Validation of info.yml failed, check required keys'}), 400
+        return api_return(error="Validation of info.yml failed, check required keys", status=400)
 
     try: 
-        commit_branch = utils.push_to_repo_yaml(data,user_name)
-
+        commit_branch = utils.push_to_repo_yaml(data, user_name)
         url = utils.create_pull_request_to_target(
             head_branch=commit_branch,
             title=f"Upload Portal: Simulation files from {user_name}",
@@ -150,12 +142,12 @@ This PR contains simulation files uploaded by {user_name} through the NMRlipids 
 
 Processing of simulation data will happen after approval.
     """
-    )
+        )
     except Exception as e:
         logger.exception("Failed to push or create PR")
-        return jsonify(error="Failed to write to repository"), 500
-    return jsonify(message="Uploaded!", pullUrl=url), 200
- 
+        return api_return(error="Failed to write to repository", status=500)
+
+    return api_return(payload={"message": "Uploaded!", "pullUrl": url})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=False)

@@ -4,49 +4,38 @@ from DatabankLib.databankLibrary import parse_valid_config_settings
 from DatabankLib import NMLDB_MOL_PATH
 import DatabankLib.settings.molecules as molecules
 import importlib
-import logging 
+import logging
 import requests
+from api_return_standard import api_return
 
 app = Flask(__name__)
 # Paths and filenames
 DATABANK_PATH = os.getenv("DATABANK_PATH", "/app/Databank")
-# Local static folder for this service
 LOCAL_STATIC = os.getenv("LOCAL_STATIC", "/app/static")
 MOLECULE_FILE = os.path.join(LOCAL_STATIC, "molecules.json")
 MAPPING_FILE = os.path.join(LOCAL_STATIC,"mapping-files.json")
 GITHUB_GATEWAY_URL = os.getenv("GITHUB_GATEWAY_URL", "http://github_gateway:5001")
 
-
 # Ensure local static folder exists
 os.makedirs(LOCAL_STATIC, exist_ok=True)
-
 
 lipids_set    = molecules.lipids_set
 molecules_set = molecules.molecules_set
 
 logger = logging.getLogger('gunicorn.error')
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
-logger = logging.getLogger("gunicorn.error")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 
 def pull_latest():
     "Pulls latest changes from the Databank repository and updates submodules."
     logger.info("Pulling latest Databank repo and submodules")
     try:
-        subprocess.run([
-            "git", "pull"
-        ], cwd=DATABANK_PATH, check=True)
-        subprocess.run([
-            "git", "submodule", "update",
-            "--remote", "--recursive"
-        ], cwd=DATABANK_PATH, check=True)
+        subprocess.run(["git", "pull"], cwd=DATABANK_PATH, check=True)
+        subprocess.run(["git", "submodule", "update", "--remote", "--recursive"], cwd=DATABANK_PATH, check=True)
     except subprocess.CalledProcessError as e:
         logger.error("Failed to update Databank repository or its submodules: %s", e)
-        raise 
+        raise
+
 
 def refresh_molecule_file():
     "Refreshes the local molecules.json file with updated molecule names."
@@ -68,7 +57,7 @@ def refresh_molecule_file():
     logger.info("Wrote %d molecules to %s", len(all_ids), MOLECULE_FILE)
     return len(all_ids)
 
-# Build and persist mapping dict
+
 def build_mapping_dict(base_path=NMLDB_MOL_PATH):
     logger.info("Building mapping dict from %s", base_path)
     mapping_dict = {}
@@ -99,8 +88,8 @@ def list_mappings():
             mapping_dict = json.load(fp)
     except FileNotFoundError as e:
         logger.error("Mapping file not found: %s", MAPPING_FILE)
-        return jsonify({"error": "Mapping file not available"}), 404
-    return jsonify(mapping_dict), 200
+        return api_return(error="Mapping file not available", status=404)
+    return api_return(payload=mapping_dict)
 
 
 @app.route('/molecules', methods=['GET'])
@@ -110,7 +99,8 @@ def list_molecules():
     """
     with open(MOLECULE_FILE, 'r') as f:
         names = json.load(f)
-    return jsonify(names), 200
+    return api_return(payload=names)
+
 
 @app.route("/refresh-databank-files", methods=["POST"])
 def refresh_databank_files():
@@ -128,40 +118,41 @@ def refresh_databank_files():
         pull_latest()
     except subprocess.CalledProcessError as e:
         logger.exception("Git pull/submodule update failed")
-        return jsonify(error="Failed to pull Databank repository"), 500
+        return api_return(error="Failed to pull Databank repository", status=500)
     except Exception as e:
         logger.exception("Unexpected error during repo pull")
-        return jsonify(error="Error updating Databank repository"), 500
+        return api_return(error="Error updating Databank repository", status=500)
 
     #Refresh molecules.json
     try:
         refresh_molecule_file()
     except FileNotFoundError as e:
         logger.exception("Molecules file path error")
-        return jsonify(error="Molecule file path invalid"), 500
+        return api_return(error="Molecule file path invalid", status=500)
     except Exception as e:
         logger.exception("Refreshing molecules failed")
-        return jsonify(error="Failed to refresh molecules list"), 500
+        return api_return(error="Failed to refresh molecules list", status=500)
 
     #Rebuild mapping-files.json
     try:
         build_mapping_dict(NMLDB_MOL_PATH)
     except FileNotFoundError as e:
         logger.exception("Mapping directory missing")
-        return jsonify(error="Mapping source directory not found"), 500
+        return api_return(error="Mapping source directory not found", status=500)
     except json.JSONDecodeError as e:
         logger.exception("Error writing mapping JSON")
-        return jsonify(error="Failed to write mapping-files.json"), 500
+        return api_return(error="Failed to write mapping-files.json", status=500)
     except Exception as e:
         logger.exception("Building mapping dict failed")
-        return jsonify(error="Failed to rebuild mapping dictionary"), 500
+        return api_return(error="Failed to rebuild mapping dictionary", status=500)
 
-    return jsonify(status="success"), 200
+    return api_return(payload={"status":"success"})
+
 
 def admin_check():
     auth = request.headers.get('Authorization', '')
     if not auth.startswith('Bearer '):
-        return jsonify(error="Missing token"), 401
+        return api_return(error="Missing token", status=401)
 
     headers = {'Authorization': auth}
     logger.info("Checking user admin status")
@@ -169,15 +160,15 @@ def admin_check():
         resp = requests.post(f"{GITHUB_GATEWAY_URL}/user-admin-check", headers=headers,timeout=10)
         resp.raise_for_status()
     except requests.HTTPError as e:
-        logger.error(f"User admin check failed, error: {e}")
-        return jsonify(error=resp.json().get("error", str(e))), resp.status_code
+        logger.error(f"User admin check failed, error:{e}")
+        return api_return(error=resp.json().get("error", str(e)), status=resp.status_code)
     except requests.RequestException as e:
         logger.error("HTTP error during admin check: %s", e)
-        return jsonify(error="Could not reach admin‑check service"), 502
+        return api_return(error="Could not reach admin‑check service", status=502)
 
     data = resp.json()  
     if not data.get("authorized", False):
-        return jsonify(error="Insufficient privileges"), 403
+        return api_return(error="Insufficient privileges", status=403)
     return None
 
 @app.route('/info-valid-check', methods=['POST'])
@@ -190,14 +181,14 @@ def info_valid_check():
         abort(400, description="Invalid or missing JSON payload")
     try:
         parse_valid_config_settings(data)
-        return jsonify(valid=True), 200
+        return api_return(payload={"valid": True})
     except Exception as e:
         logger.error("Validation failed: %s", e)
-        return jsonify(valid=False, error=str(e)), 400
+        return api_return(error=str(e), status=400)
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify(status="ok"), 200
+    return api_return(payload={"status":"ok"})
 
 # Initial setup, runs when gunicorn imports this app:
 pull_latest()
