@@ -111,6 +111,7 @@ def refresh_databank_files():
     #Permission check
     err = admin_check()
     if err:
+        logger.error(f"Admin check failed with error: {err}")
         return err
 
     #Pull & update submodules
