@@ -159,28 +159,28 @@ def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
     )
     return new_branch
 
-def create_pull_request_to_target(head_branch: str, title: str, body: str = "") -> str:
+def create_pull_request_to_target(
+    head_branch: str,
+    title: str,
+    body: str = "",
+    head_repo: str = WORK_REPO_NAME,   
+) -> str:
     """
-    Creates a pull request from WORK_REPO_NAME:head_branch 
-    into PULL_REQUEST_TARGET_REPO:WORK_BASE_BRANCH.
-    Returns the URL of the new PR.
+    Create PR from head_repo:head_branch into PULL_REQUEST_TARGET_REPO:WORK_BASE_BRANCH.
+    Works for same-org fork -> upstream.
     """
-    # Build the fully-qualified head ref
-    source_owner = WORK_REPO_NAME.split("/", 1)[0]
-    fq_head      = f"{source_owner}:{head_branch}"
+    repo = get_repo_target()  
+    payload = {
+        "title": title,
+        "body": body,
+        "base": 'main',       
+        "head": head_branch,           
+        "head_repo": head_repo,       
+        "maintainer_can_modify": False,
+    }
 
-    # Get the target repo via the App installation
-    repo = get_repo_target()
-
-    # Create the PR (no maintainer-can-modify handshake)
-    pr = repo.create_pull(
-        title                 = title,
-        body                  = body,
-        head                  = fq_head,
-        base                  = WORK_BASE_BRANCH,
-        maintainer_can_modify = False
-    )
-    return pr.html_url
+    _, data = repo._requester.requestJsonAndCheck("POST", f"{repo.url}/pulls", input=payload)
+    return data["html_url"]
 
 
 def user_has_push_access(user_token: str) -> bool:
