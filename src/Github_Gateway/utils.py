@@ -129,11 +129,14 @@ def sync_and_branch(base_branch: str = WORK_BASE_BRANCH) -> str:
     new_branch = f"bot/info_yaml_{ts}"
     repo_work = get_repo_work()
     try:
-        get_gh_work()._Github__requester.requestJson(
+        status, headers, body = get_gh_work()._Github__requester.requestJson(
             "POST",
             f"/repos/{WORK_REPO_NAME}/merge-upstream",
             input={"branch": base_branch}
         )
+        logger.info(f"Sync upstream status: {status}")
+        if not (200 <= status < 300):
+            logger.error(f"Failed to sync upstream: error code: {status}, error: {body}")
     except Exception as e:
         logger.error(f"Failed to sync upstream for {WORK_REPO_NAME}: {e}")
         raise
