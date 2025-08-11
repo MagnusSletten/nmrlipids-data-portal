@@ -21,6 +21,10 @@ OAUTH_SECRET = os.getenv("OAUTH_SECRET")
 gh = Github()
 oauth_app = gh.get_oauth_application(OAUTH_ID, OAUTH_SECRET)
 
+#Sync user data repository on startup:
+utils.sync_upstream()
+
+
 @app.route('/awake', methods=['GET'])
 def awake():
     return "<h1> Server is awake!<h1>"

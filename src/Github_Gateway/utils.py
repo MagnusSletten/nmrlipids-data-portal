@@ -109,52 +109,52 @@ def is_input_valid(info_yaml_dict: dict) -> bool:
 
     return False
 
-def branch_out(base_branch: str) -> str:
-    ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
-    new_branch = f"bot/info_yaml_{ts}"
 
-    repo = get_repo_work()
-    source = repo.get_branch(base_branch)
-    sha    = source.commit.sha
-    repo.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
-
-    return new_branch
-
-def sync_and_branch(base_branch: str = WORK_BASE_BRANCH) -> str:
-    """
-    Fast-forwards the work repo's `base_branch` to match its upstream,
-    then creates and returns a new timestamped branch off that tip.
-    """
-    ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
-    new_branch = f"bot/info_yaml_{ts}"
-    repo_work = get_repo_work()
+def sync_upstream():
+    """ Pulls latest changes from upstream into work repo"""
     try:
         status, headers, body = get_gh_work()._Github__requester.requestJson(
             "POST",
             f"/repos/{WORK_REPO_NAME}/merge-upstream",
-            input={"branch": base_branch}
+            input={"branch": WORK_BASE_BRANCH}
         )
         logger.info(f"Sync upstream status: {status}")
-        if not (200 <= status < 300):
-            logger.error(f"Failed to sync upstream: error code: {status}, error: {body}")
+        if (200 <= status < 300):
+            logger.info(f"Successfully synced work-repo against upstream")
+        else:
+            msg = f"Failed to sync upstream: code={status}, error={body}"
+            logger.error(msg)
     except Exception as e:
         logger.error(f"Failed to sync upstream for {WORK_REPO_NAME}: {e}")
         raise
-    
-    sha = repo_work.get_branch(base_branch).commit.sha
-    repo_work.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
-    logger.info(f"Synced {base_branch} and created branch {new_branch}")
+
+
+def branch_out(base_branch: str = WORK_BASE_BRANCH) -> str:
+    """
+    Creates and returns a new timestamped branch off based off WORK_BASE_BRANCH.
+    """
+    ts         = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+    new_branch = f"bot/info_yaml_{ts}"
+    repo_work = get_repo_work()
+    try: 
+        sha = repo_work.get_branch(base_branch).commit.sha
+        repo_work.create_git_ref(ref=f"refs/heads/{new_branch}", sha=sha)
+        logger.info(f"Created branch {new_branch}")
+    except Exception as e:
+        logger.error(f"Failed to create branch, error: {e}")
+        raise 
 
     return new_branch
 
-def push_to_repo_yaml(data: dict, username: str) -> tuple[str, str]:
+def push_info_file(data: dict, username: str) -> str:
     logger.info(f"Pushing to repository with data from {username}")
-    new_branch = sync_and_branch(WORK_BASE_BRANCH)
+    sync_upstream()
+    new_branch = branch_out(WORK_BASE_BRANCH)
     yaml_text  = yaml.safe_dump(data, sort_keys=False, width=120)
     path       = f"UserData/info.yml"
     message    = f"Add info.yml from {username}"
 
-    response = get_repo_work().create_file(
+    get_repo_work().create_file(
         path=path,
         message=message,
         content=yaml_text,
