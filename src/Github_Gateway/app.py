@@ -21,8 +21,6 @@ OAUTH_SECRET = os.getenv("OAUTH_SECRET")
 gh = Github()
 oauth_app = gh.get_oauth_application(OAUTH_ID, OAUTH_SECRET)
 
-#Sync user data repository on startup:
-utils.sync_upstream()
 
 
 @app.route('/awake', methods=['GET'])
@@ -137,7 +135,7 @@ def upload_file():
         return api_return(error="Validation of info.yml failed, check required keys", status=400)
 
     try: 
-        commit_branch = utils.push_to_repo_yaml(data, user_name)
+        commit_branch = utils.push_info_file(data, user_name)
         url = utils.create_pull_request_to_target(
             head_branch=commit_branch,
             title=f"Upload Portal: Simulation files from {user_name}",

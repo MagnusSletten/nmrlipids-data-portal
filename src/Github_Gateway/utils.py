@@ -6,7 +6,7 @@ from github.Repository import Repository
 from flask import current_app as app 
 import logging
 from datetime import datetime, timedelta,timezone
-
+from typing import Dict
 #Constants:
 # Base URL for Databank API which is reference to running container
 databank_api_url = os.getenv("DATABANK_API_URL", "http://databank_api:8000")
@@ -14,13 +14,24 @@ databank_api_url = os.getenv("DATABANK_API_URL", "http://databank_api:8000")
 WORK_REPO_NAME = os.getenv('WORK_REPO_NAME') #Where data is originally uploaded
 WORK_BASE_BRANCH = 'main' # A branch will be created based on this branch
 PULL_REQUEST_TARGET_REPO = os.getenv('PULL_REQUEST_TARGET_REPO')
-APP_ID      = int(os.getenv("GITHUB_APP_ID"))
-PRIVATE_KEY = os.getenv("GITHUB_APP_PRIVATE_KEY_PEM")  
-integration = GithubIntegration(auth=Auth.AppAuth(app_id=APP_ID,private_key=PRIVATE_KEY))
+HELPER_APP_ID      = int(os.getenv("HELPER_APP_ID"))
+HELPER_PRIVATE_KEY= os.getenv("HELPER_PRIVATE_KEY")
+ADMIN_APP_ID = int(os.getenv("ADMIN_APP_ID"))
+ADMIN_PRIVATE_KEY = os.getenv("ADMIN_PRIVATE_KEY")
+
+helper_integration = GithubIntegration(auth=Auth.AppAuth(app_id=HELPER_APP_ID,private_key=HELPER_PRIVATE_KEY))
+admin_integration = GithubIntegration(auth=Auth.AppAuth(app_id=ADMIN_APP_ID,private_key=ADMIN_PRIVATE_KEY))
 
 
 
 logger = logging.getLogger('gunicorn.error')
+
+#Dictionary of repositories and their github apps
+integration_map =  {
+    WORK_REPO_NAME: admin_integration,
+    PULL_REQUEST_TARGET_REPO: helper_integration
+}
+
 
 #Caching the tokens which are valid for 1 hour
 token_cache = {
@@ -38,6 +49,14 @@ token_cache = {
     },
 }
 
+def get_integration(repo_full_name:str) -> GithubIntegration:
+    """" Return integration for the given full name of repository name. e.g NMRLipids/UserData"""
+    if repo_full_name in integration_map:
+        return integration_map[repo_full_name]
+    else: raise ValueError(F"Unknown repository for integration: {repo_full_name}")
+
+
+
 def get_github_client_and_repo(repo_full_name: str):
     """
     Returns (client, repo) for repo_full_name, caching both until just
@@ -49,7 +68,8 @@ def get_github_client_and_repo(repo_full_name: str):
     
     if cache["token"] is None or now + timedelta(minutes=5) >= cache["expires"]:
         owner, repo = repo_full_name.split("/", 1)
-        installation = integration.get_installation(owner, repo)
+        integration = get_integration(repo_full_name)
+        installation = integration.get_repo_installation(owner, repo)
         tok          = integration.get_access_token(installation.id)
         
         client = Github(tok.token)
