@@ -14,8 +14,8 @@ RUN apt-get update \
  && chown runner:runner /app
 
 # Copy Github Gateway source
-COPY --chown=runner:runner src/Github_Gateway /app/backend
-COPY src/api_return_standard.py /app/backend/api_return_standard.py
+COPY --chown=runner:runner src/Backend/Github_Gateway /app/backend
+COPY src/Backend/api_return_standard.py /app/backend/api_return_standard.py
 
 
 #As root: install requirements 
