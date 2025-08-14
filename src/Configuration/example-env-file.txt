@@ -5,8 +5,10 @@ WORK_REPO_NAME=NMRLipids/user_data
 PULL_REQUEST_TARGET_REPO=NMRLipids/Bilayerdata
 
 # GitHub App credentials:
-GITHUB_APP_ID=123456
-GITHUB_APP_PRIVATE_KEY_PEM="-----BEGIN RSA PRIVATE KEY----- your key -----END RSA PRIVATE KEY-----"
+HELPER_APP_ID=123456
+ADMIN_APP_ID=234123
+HELPER_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY----- your key -----END RSA PRIVATE KEY-----"
+ADMIN_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY----- your key -----END RSA PRIVATE KEY-----
 
 # OAuth App credentials:
 OAUTH_ID=your_oauth_client_id

@@ -53,7 +53,7 @@ Nginx makes all traffic directed towards /app/ go to the Github Gateway and /api
 
 Authentication is done via Github's API through a registered a Github Oauth application. 
 
-Changes to data repository is done with the help of a registered [Github App](https://github.com/apps/simulation-addition-helper). 
+Changes to data repository is done with the help of a registered [Github App](https://github.com/apps/simulation-addition-admin) and pull requests are made with a github app with minimal permissions for pull requests [Github Helper](https://github.com/apps/simulation-addition-helper). 
 
 The Github App could also do the exact same authentication as the Github Oauth app, but due to an unfortunate UI choice within Github apps the decision was made to keep both. See [this discussion on Github](https://github.com/orgs/community/discussions/37117) for more information on this.
 
