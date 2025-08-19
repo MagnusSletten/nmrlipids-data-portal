@@ -1,5 +1,5 @@
 // Handles the composition dictionary within the data
-export default function CompositionEditor({ composition, setComposition, options, mappingDict }) {
+export default function CompositionEditor({ composition, setComposition, options, mappingDict, name }) {
   const handleLipidChange = (oldKey, newKey) => {
     setComposition(draft => {
       const entry = draft[oldKey];
@@ -17,16 +17,16 @@ export default function CompositionEditor({ composition, setComposition, options
 
   return (
     <fieldset>
-      <legend>COMPOSITION</legend>
-      {Object.entries(composition).map(([lipidId, info]) => {
-        const mappingOptions = mappingDict[lipidId] || [];
+      <legend>{name}</legend>
+      {Object.entries(composition).map(([compositionId, info]) => {
+        const mappingOptions = mappingDict[compositionId] || [];
         return (
-          <div key={lipidId} className="comp-row">
+          <div key={compositionId} className="comp-row">
             <select
-              value={lipidId}
-              onChange={e => handleLipidChange(lipidId, e.target.value)}
+              value={compositionId}
+              onChange={e => handleLipidChange(compositionId, e.target.value)}
             >
-              <option value="" disabled>Select lipid ID…</option>
+              <option value="" disabled>Select composition ID…</option>
               {options.map(id => (
                 <option key={id} value={id}>{id}</option>
               ))}
@@ -37,7 +37,7 @@ export default function CompositionEditor({ composition, setComposition, options
               value={info.NAME || ''}
               onChange={e =>
                 setComposition(draft => {
-                  draft[lipidId].NAME = e.target.value.trimEnd();
+                  draft[compositionId].NAME = e.target.value.trimEnd();
                 })
               }
             />
@@ -48,7 +48,7 @@ export default function CompositionEditor({ composition, setComposition, options
               value={info.MAPPING || ''}
               onChange={e =>
                 setComposition(draft => {
-                  draft[lipidId].MAPPING = e.target.value;
+                  draft[compositionId].MAPPING = e.target.value;
                 })
               }
             >
@@ -62,7 +62,7 @@ export default function CompositionEditor({ composition, setComposition, options
               type="button"
               onClick={() =>
                 setComposition(draft => {
-                  delete draft[lipidId];
+                  delete draft[compositionId];
                 })
               }
             >

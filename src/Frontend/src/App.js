@@ -7,6 +7,7 @@ import CompositionEditor from './CompositionEditor';
 import ScalarFields    from './ScalarFields';
 import fieldConfig from './FieldConfig';
 import UnitedAtomDictEditor from './UnitedAtomDictEditor';
+import CreateInfoFile from './CreateInfoFile';
 
 
 export default function App() {
@@ -25,7 +26,8 @@ export default function App() {
   const [message, setMessage] = useState('Fill in the form');
   const [pullRequestUrl, setPullRequestUrl] = useState(null);
   const [refreshMessage, setRefreshMessage] = useState('');
-  const [moleculeList, setMoleculeList] = useState([]);
+  const [lipidList, setLipidList] = useState([]);
+  const [solutionList, setSolutionList] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
   const mappingDict = JSON.parse(
   localStorage.getItem('mappingDict') || '{}'
@@ -34,7 +36,10 @@ export default function App() {
 // Fetch the up‐to‐date molecule list on mount:
  useEffect(() => {
     axios.get(`${API_PATH}molecules`)
-      .then(res => setMoleculeList(res.data))
+      .then(res => {
+      setLipidList(res.data.lipids)
+      setSolutionList(res.data.solution)
+     })
       .catch(err => console.error("Failed to load molecules:", err));
   }, []);
 // Fetch mapping files on mount
@@ -57,7 +62,9 @@ const updateDatabankFiles = async () => {
     setRefreshMessage('Databank files updated successfully');
     // re-fetch updated lists
     const resp = await axios.get(`${API_PATH}molecules`);
-    setMoleculeList(resp.data);
+    setLipidList(resp.data.lipids);
+    setSolutionList(resp.data.solution);
+
     // re-fetch mapping file lists
    axios.get(`${API_PATH}mapping-files`)
     .then(res => {
@@ -81,7 +88,6 @@ const [data, setData] = useImmer({
   PREEQTIME: null,
   TIMELEFTOUT: null,
   UNITEDATOM_DICT: {},
-  TYPEOFSYSTEM: null,
   TEMPERATURE: null,
   SYSTEM: null,
   PUBLICATION: null,
@@ -95,7 +101,8 @@ const [data, setData] = useImmer({
   TOP: null,
   GRO: null,
   EDR: null,
-  COMPOSITION: {}
+  LIPID_COMPOSITION: {},
+  SOLUTION_COMPOSITION: {}
 });
 
 // Method to handle changes in form fields:
@@ -157,26 +164,29 @@ useEffect(() => {
       Object.keys(fieldConfig).forEach(key => {
         draft[key] = null;
       });
-      draft.COMPOSITION = {};
+        draft.UNITEDATOM_DICT = {};
+        draft.LIPID_COMPOSITION = {};
+        draft.SOLUTION_COMPOSITION = {};
     }); 
   }
     
 // Handles form submission:
 const handleSubmit = async e => {
   e.preventDefault();
-  // Removes null or empty values from data object:
-  const filteredData = Object.fromEntries(
-  Object.entries(data).filter(([_, v]) => {
-    if (v === null || v === "") return false;
-    if (Array.isArray(v) && v.length === 0) return false;
-    if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 0)
-      return false;
-    return true;
-  })
-  );
+
+  const hasLipids   = Object.keys(data.LIPID_COMPOSITION).length > 0;
+  const hasSolution = Object.keys(data.SOLUTION_COMPOSITION).length > 0;
+
+  if (!hasLipids || !hasSolution) {
+    setUploadStatus("Add at least one membrane and one solution molecule."); 
+    return;
+  }
+
+  const infoFile = CreateInfoFile(data)
+  
   // Creates JSON payload from data
   const jsonPayload = {
-    ...filteredData,
+    ...infoFile,
     userName,
     branch
   };
@@ -267,14 +277,19 @@ return (
               <UnitedAtomDictEditor data={data} setData={setData} />
 
               <CompositionEditor
-                options={moleculeList}
+                options={lipidList}
                 mappingDict={mappingDict}  
-                composition={data.COMPOSITION}
-                setComposition={recipe =>
-                  setData(draft => {
-                    recipe(draft.COMPOSITION);
-                  })
+                composition={data.LIPID_COMPOSITION}
+                setComposition={recipe => setData(draft => { recipe(draft.LIPID_COMPOSITION); })}
+                name="Membrane Composition"
+              />
+                <CompositionEditor
+                options={solutionList}
+                mappingDict={mappingDict}  
+                composition={data.SOLUTION_COMPOSITION}
+                setComposition={recipe => setData(draft => { recipe(draft.SOLUTION_COMPOSITION); })
                 }
+                name="Solution Composition"
               />
               <div className="submit-row">
                 <button type="submit" className="button">

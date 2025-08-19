@@ -43,10 +43,11 @@ def refresh_molecule_file():
     importlib.reload(molecules)
 
     global lipids_set, molecules_set
-    lipids_set = molecules.lipids_set
-    molecules_set = molecules.molecules_set
+    lipids = sorted(molecules.lipids_set.names)
+    solution = sorted(molecules.molecules_set.names)
 
-    all_ids = sorted(lipids_set.names.union(molecules_set.names))
+    all_ids = {"lipids": lipids, "solution": solution}
+
     out_path = MOLECULE_FILE
     tmp_path = out_path + ".tmp"
 
