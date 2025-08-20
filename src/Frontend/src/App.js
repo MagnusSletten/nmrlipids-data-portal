@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
-import BranchSelect from './BranchSelect';
+import BranchSelect from './Components/BranchSelect';
 import { useImmer } from 'use-immer';
-import CompositionEditor from './CompositionEditor';
-import ScalarFields from './ScalarFields';
-import UnitedAtomDictEditor from './UnitedAtomDictEditor';
-import CreateInfoFile from './CreateInfoFile';
-import fieldConfig, { dropdownOptions } from './FieldConfig';
+import CompositionEditor from './Components/CompositionEditor';
+import ScalarFields from './Components/ScalarFields';
+import UnitedAtomDictEditor from './Components/UnitedAtomDictEditor';
+import CreateInfoFile from './Components/CreateInfoFile';
+import fieldConfig, { dropdownOptions } from './Components/FieldConfig';
 
 export default function App() {
   const OAUTH_ClientID = process.env.REACT_APP_OAUTH_CLIENT_ID;
