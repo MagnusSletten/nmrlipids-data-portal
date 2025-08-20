@@ -1,8 +1,10 @@
+
+
 // Builds html fields from the data
-export default function ScalarFields({ data, onChange,fieldConfig }) {
+export default function ScalarFields({ data, onChange, fieldConfig, dropdownOptions }) {
   return (
     <div className="scalar-fields">
-      {Object.entries(fieldConfig).map(([key, { type: fieldType, required }]) => {
+      {Object.entries(fieldConfig).map(([key, { type: fieldType, required, dropdown }]) => {
         // Determine display value
         const rawVal = data[key];
         // Handle null or undefined values for html display
@@ -17,7 +19,9 @@ export default function ScalarFields({ data, onChange,fieldConfig }) {
         } else if (fieldType === 'float') {
           inputProps = { type: 'number', step: 'any' };
         }
-        return (
+
+        if (!dropdown) {
+          return (
           <div key={key} className="field">
             <label htmlFor={key}>
               {key}{required && ' (required)'}
@@ -31,7 +35,28 @@ export default function ScalarFields({ data, onChange,fieldConfig }) {
               {...inputProps}
             />
           </div>
-        );
+        );}
+
+       else {
+          return (
+            <div key={key} className="field">
+            <label htmlFor={key}>
+              {key}{required && " (required)"}
+            </label>
+            <select
+            id={key}
+            name={key}
+            value={value}
+            onChange={onChange}
+            required={required}>
+            <option value="">Select an option</option>
+            {dropdownOptions[key].map(softwareOption => (
+              <option key={softwareOption} value = {softwareOption}>{softwareOption} </option>
+            ))}
+            </select>
+            </div>
+          );
+        }
       })}
     </div>
   );

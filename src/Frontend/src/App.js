@@ -4,11 +4,10 @@ import './App.css';
 import BranchSelect from './BranchSelect';
 import { useImmer } from 'use-immer';
 import CompositionEditor from './CompositionEditor';
-import ScalarFields    from './ScalarFields';
-import fieldConfig from './FieldConfig';
+import ScalarFields from './ScalarFields';
 import UnitedAtomDictEditor from './UnitedAtomDictEditor';
 import CreateInfoFile from './CreateInfoFile';
-
+import fieldConfig, { dropdownOptions } from './FieldConfig';
 
 export default function App() {
   const OAUTH_ClientID = process.env.REACT_APP_OAUTH_CLIENT_ID;
@@ -273,6 +272,7 @@ return (
                 data={data}
                 onChange={handleChange}
                 fieldConfig={fieldConfig}
+                dropdownOptions={dropdownOptions}
                 />
               <UnitedAtomDictEditor data={data} setData={setData} />
 
