@@ -79,8 +79,8 @@ html, body {
 
 /* Upload form */
 .upload-form {
-  width: 100%;
-  max-width: 600px;
+  width: 80%;
+ /* max-width: 600px;*/
   background: #ffffffdd;
   padding: 1.5rem;
   border: 1px solid #b0c4de;
@@ -91,9 +91,17 @@ html, body {
 /* Grid for scalar fields */
 .scalar-fields {
   display: grid;
+  width: 100%;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
   font-size: 20px;
+  justify-items: start;  
+}
+
+.field label {
+  display: block;
+  margin-bottom: 4px; 
+  font-weight: 500;  
 }
 
 /* Primary button */
@@ -195,5 +203,9 @@ html, body {
   font-size: 1.25rem;
   margin-top: auto;
   margin-bottom: 1rem; 
+
+}
+.composition-info {
+  padding-bottom: 20px;
 
 }

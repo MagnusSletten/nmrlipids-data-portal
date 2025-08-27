@@ -24,16 +24,17 @@ export default function CompositionEditor({ composition, setComposition, options
           <div key={compositionId} className="comp-row">
             <select
               value={compositionId}
+              required
               onChange={e => handleLipidChange(compositionId, e.target.value)}
             >
-              <option value="" disabled>Select composition ID…</option>
+              <option value="" disabled>Universal molecule name…</option>
               {options.map(id => (
                 <option key={id} value={id}>{id}</option>
               ))}
             </select>
 
             <input
-              placeholder="Name"
+              placeholder="Simulation Molecule Name"
               value={info.NAME || ''}
               required
               onChange={e =>

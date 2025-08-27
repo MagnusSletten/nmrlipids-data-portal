@@ -4,6 +4,7 @@ import './App.css';
 import BranchSelect from './Components/BranchSelect';
 import { useImmer } from 'use-immer';
 import CompositionEditor from './Components/CompositionEditor';
+import CompositionInfo from './Components/CompositionInfo';
 import ScalarFields from './Components/ScalarFields';
 import UnitedAtomDictEditor from './Components/UnitedAtomDictEditor';
 import CreateInfoFile from './Components/CreateInfoFile';
@@ -275,7 +276,7 @@ return (
                 dropdownOptions={dropdownOptions}
                 />
               <UnitedAtomDictEditor data={data} setData={setData} />
-
+              <CompositionInfo/>
               <CompositionEditor
                 options={lipidList}
                 mappingDict={mappingDict}  
