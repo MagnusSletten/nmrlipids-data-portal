@@ -110,24 +110,24 @@ def get_repo_target() -> Repository:
     return repo
 
 
-def is_input_valid(info_yaml_dict: dict) -> bool:
+def is_input_invalid(info_yaml_dict: dict):
     """
     Validates the provided YAML dict via the Databank API.
-    Returns True if valid, False otherwise.
+    Returns None if valid, otherwise the error(s)
     """
     logger.info(f"Validating info yml")
     resp = requests.post(
         f"{databank_api_url}/info-valid-check", json=info_yaml_dict,timeout=10
     )
     if resp.status_code == 200:
-        return True
+        return None
     try:
-        err = resp.json().get("error", resp.text)
+        errors = resp.json().get("error", resp.text)
     except ValueError:
-        err = resp.text
-    logger.error(f"Validation failed: {err}")
+        errors = resp.text
+    logger.error(f"Validation failed: {errors}")
 
-    return False
+    return errors;  
 
 
 def sync_upstream():

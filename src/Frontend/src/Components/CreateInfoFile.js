@@ -13,7 +13,22 @@ export default function CreateInfoFile(data){
   })
   );
 
-  const COMPOSITION = {...LIPID_COMPOSITION,...SOLUTION_COMPOSITION}
-  const infoFile = {...filteredData,COMPOSITION}
-  return infoFile; 
+const merged = { ...LIPID_COMPOSITION, ...SOLUTION_COMPOSITION };
+
+const COMPOSITION = Object.fromEntries(
+  Object.entries(merged).filter(([k, v]) => {
+    if (!k || k.trim() === "") return false;           
+    if (!v || typeof v !== "object") return false;     
+
+    const { NAME, MAPPING } = v;
+    if (!NAME || NAME.trim() === "") return false;
+    if (!MAPPING || MAPPING.trim() === "") return false;
+
+    return true;
+  })
+);
+
+const infoFile = { ...filteredData, COMPOSITION };
+return infoFile;
+
 }

@@ -131,7 +131,8 @@ def upload_file():
     if not user_name or not base_branch:
         return api_return(error="Missing userName or branch in JSON", status=400)
 
-    if not utils.is_input_valid(data):
+    #Todo return specific yaml errors. 
+    if utils.is_input_invalid(data):
         return api_return(error="Validation of info.yml failed, check required keys", status=400)
 
     try: 

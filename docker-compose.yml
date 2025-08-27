@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     environment:
       - GITHUB_GATEWAY_URL=http://github_gateway:5001
+      - PYTHONPATH=/app/Databank
       - DATABANK_PATH=/app/Databank
       - LOCAL_STATIC=/app/static
 

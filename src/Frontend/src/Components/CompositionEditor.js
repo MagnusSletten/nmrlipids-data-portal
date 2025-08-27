@@ -35,6 +35,7 @@ export default function CompositionEditor({ composition, setComposition, options
             <input
               placeholder="Name"
               value={info.NAME || ''}
+              required
               onChange={e =>
                 setComposition(draft => {
                   draft[compositionId].NAME = e.target.value.trimEnd();
@@ -44,6 +45,7 @@ export default function CompositionEditor({ composition, setComposition, options
 
             <select
               className="mapping-select"
+              required
               placeholder="Mapping"
               value={info.MAPPING || ''}
               onChange={e =>

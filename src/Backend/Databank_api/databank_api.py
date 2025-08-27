@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, request, abort
 import os, json, subprocess
 from DatabankLib.databankLibrary import parse_valid_config_settings
 from DatabankLib import NMLDB_MOL_PATH
@@ -7,6 +7,7 @@ import importlib
 import logging
 import requests
 from api_return_standard import api_return
+from Scripts.BuildDatabank.SchemaValidation.ValidateYAML import validate_info_dict
 
 app = Flask(__name__)
 # Paths and filenames
@@ -183,10 +184,30 @@ def info_valid_check():
         abort(400, description="Invalid or missing JSON payload")
     try:
         parse_valid_config_settings(data)
-        return api_return(payload={"valid": True})
     except Exception as e:
         logger.error("Validation failed: %s", e)
         return api_return(error=str(e), status=400)
+    try:
+        logger.info("Validating info file by schema")
+        errors = validate_info_dict(data)
+        if errors:
+            for e in errors:
+                logger.error(str(e))
+            return api_return(
+                error="Schema validation failed: " + "; ".join(str(e) for e in errors),
+                payload={},
+                status=400
+            )
+        else:
+            logger.info("No errors found in info file by schema")
+    except Exception as e:
+        logger.error("Schema validation crashed: %s", e)
+        return api_return(error=str(e), payload={}, status=400)
+
+    return api_return(payload={"valid": True}, status=200)
+        
+
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
