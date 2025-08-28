@@ -11,7 +11,7 @@ html, body {
 /* Grid container */
 .Container {
   display: grid;
-  grid-template-columns: 15% auto 15%;
+  grid-template-columns: 20% auto 20%;
   height: 100vh;
   overflow-y: auto;
 }
@@ -66,7 +66,6 @@ html, body {
 
 /* Form inputs */
 .name-input,
-.field input,
 .scalar-fields select {
   width: 100%;
   max-width: 320px;
@@ -75,7 +74,9 @@ html, body {
   border: 1px solid #90a4ae;     
   border-radius: 4px;
   font-size: 1rem;
+  margin: auto;
 }
+
 
 /* Upload form */
 .upload-form {
@@ -91,17 +92,39 @@ html, body {
 /* Grid for scalar fields */
 .scalar-fields {
   display: grid;
-  width: 100%;
+  width: 80%;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  font-size: 20px;
-  justify-items: start;  
+  row-gap: 10px;
+  column-gap: 40px;
+  align-self: center;
+  justify-self: center;
+  margin-bottom: 10px;
+  
+}
+input{box-sizing:border-box} 
+
+.field {
+  align-self: center;
+  justify-self: center;
+  width: 100%;
+
+}
+
+.field input, .field select{
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid #90a4ae;     
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
 .field label {
   display: block;
   margin-bottom: 4px; 
-  font-weight: 500;  
+  font-weight: 500;
+  font-size: 17px;
+
 }
 
 /* Primary button */

@@ -16,7 +16,7 @@ export default function App() {
   const GITHUB_GATEWAY_PATH = '/app/';
   const API_PATH = '/api/';
 
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(true);
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
 );
