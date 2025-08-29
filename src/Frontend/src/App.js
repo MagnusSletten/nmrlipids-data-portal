@@ -7,8 +7,9 @@ import CompositionEditor from './Components/CompositionEditor';
 import CompositionInfo from './Components/CompositionInfo';
 import ScalarFields from './Components/ScalarFields';
 import UnitedAtomDictEditor from './Components/UnitedAtomDictEditor';
-import CreateInfoFile from './Components/CreateInfoFile';
+import CreateInfoFile from './Utils/CreateInfoFile';
 import fieldConfig, { dropdownOptions } from './Components/FieldConfig';
+import getInitialData  from './Utils/Data';
 
 export default function App() {
   const OAUTH_ClientID = process.env.REACT_APP_OAUTH_CLIENT_ID;
@@ -16,7 +17,7 @@ export default function App() {
   const GITHUB_GATEWAY_PATH = '/app/';
   const API_PATH = '/api/';
 
-  const [loggedIn, setLoggedIn] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
 );
@@ -29,9 +30,10 @@ export default function App() {
   const [lipidList, setLipidList] = useState([]);
   const [solutionList, setSolutionList] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
-  const mappingDict = JSON.parse(
-  localStorage.getItem('mappingDict') || '{}'
-);
+  const [mappingDict,setMappingDict] = useState(
+  JSON.parse(localStorage.getItem('mappingDict')) || {});
+  const [data,setData] = useImmer(getInitialData());
+  const resetData = () => setData(getInitialData());
 
 // Fetch the up‐to‐date molecule list on mount:
  useEffect(() => {
@@ -68,7 +70,8 @@ const updateDatabankFiles = async () => {
     // re-fetch mapping file lists
    axios.get(`${API_PATH}mapping-files`)
     .then(res => {
-      localStorage.setItem('mappingDict', JSON.stringify(res.data)); 
+      localStorage.setItem('mappingDict', JSON.stringify(res.data));
+      setMappingDict(res.data);   
     })
     .catch(err => console.error("Failed to load mappings:", err));  
   } catch (err) {
@@ -79,31 +82,6 @@ const updateDatabankFiles = async () => {
     }
   }
 }; 
-// Contains data for the form 
-const [data, setData] = useImmer({
-  DOI: null,
-  TRJ: null,
-  TPR: null,
-  SOFTWARE: null,
-  PREEQTIME: null,
-  TIMELEFTOUT: null,
-  UNITEDATOM_DICT: {},
-  TEMPERATURE: null,
-  SYSTEM: null,
-  PUBLICATION: null,
-  AUTHORS_CONTACT: null,
-  SOFTWARE_VERSION: null,
-  FF: null,
-  FF_SOURCE: null,
-  FF_DATE: null,
-  CPT: null,
-  LOG: null,
-  TOP: null,
-  GRO: null,
-  EDR: null,
-  LIPID_COMPOSITION: {},
-  SOLUTION_COMPOSITION: {}
-});
 
 // Method to handle changes in form fields:
 const handleChange = e => {
@@ -135,7 +113,6 @@ useEffect(() => {
           localStorage.githubToken = token;
           localStorage.username   = username;
           localStorage.setItem('adminStatus', admin_status.toString());
-          setAdminStatus(admin_status)
           setLoggedIn(true);
           setLoggedInMessage(`Logged in as ${username}`);
           setAdminStatus(admin_status);     
@@ -160,14 +137,7 @@ useEffect(() => {
     setBranch('main');
     setPullRequestUrl(null);
     setUploadStatus(null);
-    setData(draft => {
-      Object.keys(fieldConfig).forEach(key => {
-        draft[key] = null;
-      });
-        draft.UNITEDATOM_DICT = {};
-        draft.LIPID_COMPOSITION = {};
-        draft.SOLUTION_COMPOSITION = {};
-    }); 
+    resetData();
   }
     
 // Handles form submission:

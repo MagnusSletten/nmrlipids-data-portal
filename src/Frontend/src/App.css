@@ -129,6 +129,7 @@ input{box-sizing:border-box}
 
 /* Primary button */
 .button {
+  display: inline-block;
   background-color: #0d47a1;   
   border: none;
   color: #fff;
@@ -191,10 +192,13 @@ input{box-sizing:border-box}
 }
 .submit-row {
   display: grid;
-  grid-template-columns: 20% auto 30%;
+  grid-template-columns: max-content 1fr max-content;
   align-items: center;
   
 }
+.submit-row > :first-child { justify-self: start; }
+.submit-row > :nth-child(2) { justify-self: center; text-align: center; }
+.submit-row > :last-child  { justify-self: end; }
 
 .upload-status {
   text-align: center;

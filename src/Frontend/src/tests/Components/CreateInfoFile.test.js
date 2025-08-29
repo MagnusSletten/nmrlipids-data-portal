@@ -1,4 +1,4 @@
-import CreateInfoFile from '../../Components/CreateInfoFile';
+import CreateInfoFile from '../../Utils/CreateInfoFile';
 
 describe('CreateInfoFile', () => {
   test('removes empty/null/blank scalars, empty arrays, and empty objects from root', () => {
