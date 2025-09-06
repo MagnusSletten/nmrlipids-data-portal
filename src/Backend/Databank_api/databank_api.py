@@ -1,13 +1,18 @@
 from flask import Flask, request, abort
 import os, json, subprocess
-from DatabankLib.databankLibrary import parse_valid_config_settings
+
 from DatabankLib import NMLDB_MOL_PATH
-import DatabankLib.settings.molecules as molecules
 import importlib
 import logging
 import requests
 from api_return_standard import api_return
 from Scripts.BuildDatabank.SchemaValidation.ValidateYAML import validate_info_dict
+
+try:
+    import DatabankLib.settings.molecules as molecules
+    from DatabankLib.databankLibrary import parse_valid_config_settings
+except FileNotFoundError as e:
+    print(e)
 
 app = Flask(__name__)
 # Paths and filenames
@@ -41,7 +46,10 @@ def pull_latest():
 def refresh_molecule_file():
     "Refreshes the local molecules.json file with updated molecule names."
     logger.info("Refreshing molecule file")
-    importlib.reload(molecules)
+    try:
+        importlib.reload(molecules)
+    except FileNotFoundError as e:
+        print(e)
 
     global lipids_set, molecules_set
     lipids = sorted(molecules.lipids_set.names)
