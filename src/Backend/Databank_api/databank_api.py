@@ -7,10 +7,12 @@ import logging
 import requests
 from api_return_standard import api_return
 from Scripts.BuildDatabank.SchemaValidation.ValidateYAML import validate_info_dict
+from DatabankLib.databankLibrary import (
+    parse_valid_config_settings
+)
 
 try:
     import DatabankLib.settings.molecules as molecules
-    from DatabankLib.databankLibrary import parse_valid_config_settings
 except FileNotFoundError as e:
     print(e)
 

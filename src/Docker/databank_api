@@ -16,10 +16,12 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && pip install --no-cache-dir flask pyyaml gunicorn 
 
-# Clone Databank and install DatabankLib
 RUN git clone --branch "${DATABANK_BRANCH}" --recurse-submodules "${DATABANK_URL}" Databank \
- && pip install --no-cache-dir -e Databank -r Databank/Scripts/DatabankLib/requirements-dev.txt
+ && cd Databank \
+ && git submodule update --init --recursive --remote \
+ && pip install --no-cache-dir -e . -r Scripts/DatabankLib/requirements-dev.txt
 
+ 
 # Copy the API application
 COPY src/Backend/Databank_api/. /app/
 # Copy the api return standard:
