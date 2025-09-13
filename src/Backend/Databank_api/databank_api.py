@@ -7,7 +7,7 @@ import importlib
 import logging
 import requests
 from api_return_standard import api_return
-from Scripts.BuildDatabank.SchemaValidation.ValidateYAML import validate_info_dict
+from DatabankLib.SchemaValidation.ValidateYAML import validate_info_dict
 
 app = Flask(__name__)
 # Paths and filenames
