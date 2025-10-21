@@ -10,14 +10,15 @@ import UnitedAtomDictEditor from './Components/UnitedAtomDictEditor';
 import CreateInfoFile from './Utils/CreateInfoFile';
 import fieldConfig, { dropdownOptions } from './Components/FieldConfig';
 import getInitialData  from './Utils/Data';
+import Information from './Components/Information';
 
 export default function App() {
   const OAUTH_ClientID = process.env.REACT_APP_OAUTH_CLIENT_ID;
   const DataRepo = process.env.REACT_APP_DATA_REPO;
   const GITHUB_GATEWAY_PATH = '/app/';
   const API_PATH = '/api/';
-
   const [loggedIn, setLoggedIn] = useState(false);
+  const [showInformation, setShowInformation] = useState(false);
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
 );
@@ -187,17 +188,17 @@ const handleSubmit = async e => {
 return (
   <div className="Container">
     <div className="Left">
-      {loggedIn && adminStatus && (
-        <div className="Admin-panel">
-          <h3> Administration panel </h3>
-          <div className="refresh-panel">
-            <button onClick={updateDatabankFiles} className="button secondary">
-              Update databank files
-            </button>
-            {refreshMessage && <p className="centered">{refreshMessage}</p>}
-          </div>
-        </div>
-      )}
+      <>
+        <button
+          onClick={() => setShowInformation(prev => !prev)}
+          className="button secondary"
+        >
+          {showInformation ? "Hide" : "Show"} Information
+        </button>
+
+        {showInformation && <Information />}
+      </>
+     
     </div>
 
     <div className="App">
@@ -230,12 +231,12 @@ return (
             onChange={e => setUserName(e.target.value)}
             className="name-input centered"
           />
-          <BranchSelect
-            selectedBranch={branch}
-            setSelectedBranch={setBranch}
-            setMessage={setMessage}
-            DataRepo={DataRepo}
-          />
+            <BranchSelect
+              selectedBranch={branch}
+              setSelectedBranch={setBranch}
+              setMessage={setMessage}
+              DataRepo={DataRepo}
+            />
           {message && <p className="status-message-centered">Status: {message}</p>}
 
           <form onSubmit={handleSubmit} className="upload-form">
@@ -298,14 +299,28 @@ return (
 
 <div className="Right">
   {loggedIn && (
-    <button onClick={handleLogout} className="button secondary">
-      Logout
-    </button>
-  )}
-    {loggedIn && loggedInMessage && (
-   <p className="user-info">{loggedInMessage}</p>
-   )}
+    <>
+      <div className="Right-top">
+        <button onClick={handleLogout} className="button secondary">
+          Logout
+        </button>
+      </div>
 
+      {adminStatus && (
+        <div className="Right-center">
+          <div className="Admin-panel">
+            <h3>Administration panel</h3>
+            <div className="refresh-panel">
+              <button onClick={updateDatabankFiles} className="button secondary">
+                Update databank files
+              </button>
+              {refreshMessage && <p className="centered">{refreshMessage}</p>}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )}
 </div>
 </div>
 );
