@@ -186,8 +186,9 @@ const handleSubmit = async e => {
 };
 
 return (
-  <div className="Container">
-    <div className="Left">
+<div className="Container">
+  <div className="Left">
+    {loggedIn && (
       <>
         <button
           onClick={() => setShowInformation(prev => !prev)}
@@ -198,8 +199,8 @@ return (
 
         {showInformation && <Information />}
       </>
-     
-    </div>
+    )}
+  </div>
 
     <div className="App">
       <header className="App-header">
