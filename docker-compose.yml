@@ -10,7 +10,7 @@ services:
     environment:
       - GITHUB_GATEWAY_URL=http://github_gateway:5001
       - PYTHONPATH=/app/Databank
-      - DATABANK_PATH=/app/Databank
+      - BILAYERDATA_PATH=/app/BilayerData
       - LOCAL_STATIC=/app/static
 
   github_gateway:

@@ -1,17 +1,17 @@
 from flask import Flask, request, abort
 import os, json, subprocess
-from DatabankLib.databankLibrary import parse_valid_config_settings
-from DatabankLib import NMLDB_MOL_PATH
-import DatabankLib.settings.molecules as molecules
+from fairmd.lipids.databankLibrary import parse_valid_config_settings
+from fairmd.lipids import FMDL_MOL_PATH
+import fairmd.lipids.settings.molecules as molecules
 import importlib
 import logging
 import requests
 from api_return_standard import api_return
-from DatabankLib.SchemaValidation.ValidateYAML import validate_info_dict
+from fairmd.lipids.SchemaValidation.ValidateYAML import validate_info_dict
 
 app = Flask(__name__)
 # Paths and filenames
-DATABANK_PATH = os.getenv("DATABANK_PATH", "/app/Databank")
+BILAYERDATA_PATH = os.getenv("BILAYERDATA_PATH", "/app/Bilayerdata")
 LOCAL_STATIC = os.getenv("LOCAL_STATIC", "/app/static")
 MOLECULE_FILE = os.path.join(LOCAL_STATIC, "molecules.json")
 MAPPING_FILE = os.path.join(LOCAL_STATIC,"mapping-files.json")
@@ -31,8 +31,7 @@ def pull_latest():
     "Pulls latest changes from the Databank repository and updates submodules."
     logger.info("Pulling latest Databank repo and submodules")
     try:
-        subprocess.run(["git", "pull"], cwd=DATABANK_PATH, check=True)
-        subprocess.run(["git", "submodule", "update", "--remote", "--recursive"], cwd=DATABANK_PATH, check=True)
+        subprocess.run(["git", "pull"], cwd=BILAYERDATA_PATH, check=True)
     except subprocess.CalledProcessError as e:
         logger.error("Failed to update Databank repository or its submodules: %s", e)
         raise
@@ -60,7 +59,7 @@ def refresh_molecule_file():
     return len(all_ids)
 
 
-def build_mapping_dict(base_path=NMLDB_MOL_PATH):
+def build_mapping_dict(base_path=FMDL_MOL_PATH):
     logger.info("Building mapping dict from %s", base_path)
     mapping_dict = {}
     lipid_path = os.path.join(base_path, "membrane")
@@ -138,7 +137,7 @@ def refresh_databank_files():
 
     #Rebuild mapping-files.json
     try:
-        build_mapping_dict(NMLDB_MOL_PATH)
+        build_mapping_dict(FMDL_MOL_PATH)
     except FileNotFoundError as e:
         logger.exception("Mapping directory missing")
         return api_return(error="Mapping source directory not found", status=500)
@@ -216,7 +215,7 @@ def health_check():
 # Initial setup, runs when gunicorn imports this app:
 pull_latest()
 refresh_molecule_file()
-build_mapping_dict(NMLDB_MOL_PATH)
+build_mapping_dict(FMDL_MOL_PATH)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=False)

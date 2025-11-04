@@ -2,7 +2,7 @@
 FROM python:3.11.13-slim-bookworm
 
 # Build args for Databank repo
-ARG DATABANK_URL=https://github.com/NMRLipids/Databank
+ARG DATABANK_URL=https://github.com/NMRLipids/FAIRMD_lipids
 ARG DATABANK_BRANCH=main
 
 # Environment variables
@@ -10,20 +10,15 @@ ENV DATABANK_PATH=/app/Databank
   
 WORKDIR /app
 
-# Install git and Python deps
+# Install git 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git \
- && rm -rf /var/lib/apt/lists/* \
- && pip install --no-cache-dir flask pyyaml gunicorn 
+ && rm -rf /var/lib/apt/lists/* 
 
-# Clone Databank and install DatabankLib
-RUN git clone https://github.com/NMRlipids/Databank
+RUN git clone https://github.com/NMRLipids/BilayerData BilayerData
 
+ENV FMDL_DATA_PATH=/app/BilayerData
 
-WORKDIR /app/Databank
-RUN pip install .
-RUN git clone https://github.com/NMRLipids/BilayerData
-ENV NMLDB_DATA_PATH=/app/Databank/BilayerData
 WORKDIR /app
 # Copy the API application
 COPY src/Backend/Databank_api/. /app/
