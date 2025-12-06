@@ -121,10 +121,17 @@ def upload_file():
         return api_return(error=error, status=err_code)
     if not request.is_json:
         return api_return(error="Content-Type must be application/json", status=400)
-
+    
     data = request.get_json()
     if data is None:
         return api_return(error="Malformed or empty JSON body", status=400)
+    
+    try:
+        gh_user = Github(login_or_token=token).get_user()
+        gh_user_name = gh_user.login
+    except GithubException:
+        logger.exception("Failed to fetch GitHub username from token")
+        return api_return(error="Failed to verify GitHub user", status=502)
 
     user_name   = data.pop('userName', None)
     base_branch = data.pop('branch',   None)
@@ -141,7 +148,7 @@ def upload_file():
             head_branch=commit_branch,
             title=f"Upload Portal: Simulation files from {user_name}",
             body=f"""\
-This PR contains simulation files uploaded by {user_name} through the NMRlipids upload portal.
+This PR contains simulation files uploaded by @{gh_user_name} through the NMRlipids upload portal.
 
 Processing of simulation data will happen after approval.
     """
