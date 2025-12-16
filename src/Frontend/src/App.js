@@ -35,8 +35,9 @@ export default function App() {
   JSON.parse(localStorage.getItem('mappingDict')) || {});
   const [data,setData] = useImmer(getInitialData());
   const resetData = () => setData(getInitialData());
-
-// Fetch the up‐to‐date molecule list on mount:
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSavedFingerprint, setLastSavedFingerprint] = useState('');
+  // Fetch the up‐to‐date molecule list on mount:
  useEffect(() => {
     axios.get(`${API_PATH}molecules`)
       .then(res => {
@@ -139,11 +140,14 @@ useEffect(() => {
     setPullRequestUrl(null);
     setUploadStatus(null);
     resetData();
+    setIsSubmitting(false);
+    setLastSavedFingerprint('');
   }
     
 // Handles form submission:
 const handleSubmit = async e => {
   e.preventDefault();
+  if (isSubmitting) return;
 
   const hasLipids   = Object.keys(data.LIPID_COMPOSITION).length > 0;
   const hasSolution = Object.keys(data.SOLUTION_COMPOSITION).length > 0;
@@ -161,8 +165,16 @@ const handleSubmit = async e => {
     userName,
     branch
   };
+  const fingerprint = JSON.stringify(jsonPayload);
+  if (fingerprint === lastSavedFingerprint) {
+    setUploadStatus("No changes since last successful submit.");
+    return;
+  }
+
 
   setUploadStatus('Uploading data…');
+  setIsSubmitting(true);
+
 
   try {
     const resp = await axios.post('/app/upload', jsonPayload, {
@@ -171,8 +183,8 @@ const handleSubmit = async e => {
         Authorization: `Bearer ${localStorage.githubToken}`
       }
     });
-
     setUploadStatus('Upload succeeded!');
+    setLastSavedFingerprint(fingerprint);
     
     if (resp.data.pullUrl) {
       setPullRequestUrl(resp.data.pullUrl);
@@ -182,6 +194,9 @@ const handleSubmit = async e => {
     const errorMsg = err.response?.data?.error ?? err.message;
     console.error('Upload error', err.response?.status, err.response?.data || err);
     setUploadStatus(`Upload failed: ${errorMsg}`);
+  }
+  finally {
+    setIsSubmitting(false);
   }
 };
 
@@ -265,8 +280,8 @@ return (
                 name="Solution Composition"
               />
               <div className="submit-row">
-                <button type="submit" className="button">
-                  Submit
+                <button type="submit" className="button" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting…" : "Submit"}
                 </button>
                 {uploadStatus && (
                 <p className="upload-status" style={{ marginRight: '1em' }}>
