@@ -9,7 +9,7 @@ const fieldConfig = {
   SYSTEM:            { type: 'string',  trim: true,  required: true,  dropdown: false },
   PUBLICATION:       { type: 'string',  trim: true,  required: false, dropdown: false },
   TEMPERATURE:       { type: 'float',   trim: false, required: false, dropdown: false },
-  AUTHORS_CONTACT:   { type: 'string',  trim: false, required: false, dropdown: false },
+  AUTHORS_CONTACT:   { type: 'string',  trim: false, required: true,  dropdown: false },
   SOFTWARE_VERSION:  { type: 'string',  trim: true,  required: false, dropdown: false },
   FF:                { type: 'string',  trim: true,  required: true,  dropdown: false },
   FF_SOURCE:         { type: 'string',  trim: true,  required: false, dropdown: false },
