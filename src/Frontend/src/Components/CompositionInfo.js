@@ -15,7 +15,7 @@ export default function CompositionInfo(){
         <li>
             <code>Universal Molecule Name</code>: defined by the NMRlipids project and {" "}
             <a
-            href="https://nmrlipids.github.io/schemas/moleculesAndMapping.html#molecule-names"
+            href="https://nmrlipids.github.io/FAIRMD_lipids/stable/schemas/moleculesAndMapping.html#molecule-names"
             target="_blank"
             rel="noopener noreferrer"
             >
@@ -33,7 +33,7 @@ export default function CompositionInfo(){
         <p>
           Details and examples:{" "}
           <a
-            href="https://nmrlipids.github.io/schemas/simulation_metadata.html#fields-description"
+            href="https://nmrlipids.github.io/FAIRMD_lipids/stable/schemas/simulation_metadata.html#fields-description"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -48,7 +48,7 @@ export default function CompositionInfo(){
           run the same analyses across simulations that use different naming
           schemes. More info here:{" "}
           <a
-            href="https://nmrlipids.github.io/schemas/moleculesAndMapping.html#universal-atom-names-in-mapping-files"
+            href="https://nmrlipids.github.io/FAIRMD_lipids/stable/schemas/moleculesAndMapping.html#universal-atom-names-in-mapping-files"
             target="_blank"
             rel="noopener noreferrer"
           >

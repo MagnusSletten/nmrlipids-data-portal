@@ -46,6 +46,12 @@ html, body {
 
   
 }
+.required-hint {
+  font-size: 1rem;
+  padding: 8px 12px; 
+  margin-bottom: 0.75rem;    
+
+}
 
 /* Right panel */
 .Right {
@@ -68,6 +74,10 @@ html, body {
   flex-direction: column;
   justify-content: center;    
   align-items: center;        
+}
+.required-asterisk {
+  color: #c62828;   
+  font-weight: 600;
 }
 
 /* Admin panel */
