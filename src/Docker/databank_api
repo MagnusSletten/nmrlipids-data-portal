@@ -1,33 +1,39 @@
 # Databank API Dockerfile
 FROM python:3.11.13-slim-bookworm
 
-# Build args for Databank repo
-ARG DATABANK_URL=https://github.com/NMRLipids/FAIRMD_lipids
+# Build args 
+ARG DATABANK_URL=https://github.com/NMRLipids/FAIRMD_lipids.git
 ARG DATABANK_BRANCH=main
+ARG BILAYERDATA_URL=https://github.com/NMRLipids/BilayerData.git
+ARG BILAYERDATA_BRANCH=main
 
-# Environment variables
-ENV DATABANK_PATH=/app/Databank 
-  
+# Environment variables 
+ENV DATABANK_PATH=/app/Databank \
+    BILAYERDATA_PATH=/app/BilayerData \
+    FMDL_DATA_PATH=/app/BilayerData
+
 WORKDIR /app
 
-# Install git 
+# Install git
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git \
- && rm -rf /var/lib/apt/lists/* 
+ && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/NMRLipids/BilayerData BilayerData
+# Clone BilayerData and Databank (FAIRMD_lipids)
+RUN git clone --branch "${BILAYERDATA_BRANCH}" --single-branch "${BILAYERDATA_URL}" BilayerData \
+ && git clone --branch "${DATABANK_BRANCH}" --single-branch "${DATABANK_URL}" Databank
 
-ENV FMDL_DATA_PATH=/app/BilayerData
-
-WORKDIR /app
 # Copy the API application
 COPY src/Backend/Databank_api/. /app/
 # Copy the api return standard:
 COPY src/Backend/api_return_standard.py /app/api_return_standard.py
 
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt \
+ && pip install --no-cache-dir -e /app/Databank
 
 # Expose internal port
 EXPOSE 8000
 
+# Start the API via gunicorn
 CMD ["gunicorn", "-c", "gunicorn_config.py", "databank_api:app"]

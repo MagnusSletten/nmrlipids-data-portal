@@ -2,7 +2,7 @@ from flask import Flask, request, abort
 import os, json, subprocess
 from fairmd.lipids.databankLibrary import parse_valid_config_settings
 from fairmd.lipids import FMDL_MOL_PATH
-import fairmd.lipids.settings.molecules as molecules
+import fairmd.lipids.molecules as molecules
 import importlib
 import logging
 import requests
@@ -11,7 +11,8 @@ from fairmd.lipids.SchemaValidation.ValidateYAML import validate_info_dict
 
 app = Flask(__name__)
 # Paths and filenames
-BILAYERDATA_PATH = os.getenv("BILAYERDATA_PATH", "/app/Bilayerdata")
+BILAYERDATA_PATH = os.getenv("BILAYERDATA_PATH", "/app/BilayerData")
+DATABANK_PATH = os.getenv("DATABANK_PATH", "/app/Databank")
 LOCAL_STATIC = os.getenv("LOCAL_STATIC", "/app/static")
 MOLECULE_FILE = os.path.join(LOCAL_STATIC, "molecules.json")
 MAPPING_FILE = os.path.join(LOCAL_STATIC,"mapping-files.json")
@@ -27,15 +28,22 @@ logger = logging.getLogger('gunicorn.error')
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 
-def pull_latest():
-    "Pulls latest changes from the Databank repository and updates submodules."
-    logger.info("Pulling latest Databank repo and submodules")
-    try:
-        subprocess.run(["git", "pull"], cwd=BILAYERDATA_PATH, check=True)
-    except subprocess.CalledProcessError as e:
-        logger.error("Failed to update Databank repository or its submodules: %s", e)
-        raise
+def pull_latest() -> None:
+    """
+    Pull latest changes for BilayerData and Databank repositories.
+    """
+    repos = [
+        (BILAYERDATA_PATH, "BilayerData"),
+        (DATABANK_PATH, "Databank"),
+    ]
 
+    for path, name in repos:
+        logger.info("Pulling latest %s repo at %s", name, path)
+        try:
+            subprocess.run(["git", "pull"], cwd=path, check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error("Failed to update %s repository: %s", name, e)
+            raise
 
 def refresh_molecule_file():
     "Refreshes the local molecules.json file with updated molecule names."

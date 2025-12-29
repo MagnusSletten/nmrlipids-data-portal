@@ -1,5 +1,4 @@
 requests 
-fairmd-lipids
 gunicorn
 flask
 pyyaml
