@@ -9,6 +9,7 @@ export default function ScalarFields({ data, onChange, fieldConfig, dropdownOpti
         dropdown,
         description,
         unit,
+        uiLabel
       }]) => {
         // Determine display value
         const rawVal = data[key];
@@ -25,11 +26,13 @@ export default function ScalarFields({ data, onChange, fieldConfig, dropdownOpti
           inputProps = { type: 'number', step: 'any' };
         }
 
+        const labelText = uiLabel ?? key;
+
         const label = (
           <label htmlFor={key} title={description || ''}>
-            {key}
+            {labelText}
             {unit && ` (${unit})`}
-             {required && <span className="required-asterisk"> *</span>}
+            {required && <span className="required-asterisk"> *</span>}
           </label>
         );
 

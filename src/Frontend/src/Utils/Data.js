@@ -4,7 +4,7 @@ export default function getInitialData(){
   return ({
   DOI: null,
   TRJ: null,
-  TPR: null,
+  BinaryTopology: null,
   SOFTWARE: null,
   PREEQTIME: null,
   TIMELEFTOUT: null,
@@ -20,7 +20,6 @@ export default function getInitialData(){
   CPT: null,
   LOG: null,
   TOP: null,
-  GRO: null,
   EDR: null,
   LIPID_COMPOSITION: {},
   SOLUTION_COMPOSITION: {}

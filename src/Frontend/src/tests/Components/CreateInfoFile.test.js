@@ -93,4 +93,64 @@ describe('CreateInfoFile', () => {
       POPC: { NAME: 'POPC', MAPPING: 'popc.yaml' },
     });
   });
+
+  test('maps BinaryTopology with .tpr extension to TPR and removes BinaryTopology key', () => {
+    const input = {
+      SYSTEM: 'Bilayer Y',
+      BinaryTopology: 'analyze.tpr',
+      LIPID_COMPOSITION: {},
+      SOLUTION_COMPOSITION: {},
+    };
+
+    const out = CreateInfoFile(input);
+
+    expect(out.TPR).toBe('analyze.tpr');
+    expect(out.PSF).toBeUndefined();
+    expect(out.BinaryTopology).toBeUndefined();
+    expect(out.SYSTEM).toBe('Bilayer Y');
+  });
+
+  test('maps BinaryTopology with .psf extension to PSF and removes BinaryTopology key', () => {
+    const input = {
+      SYSTEM: 'Bilayer Z',
+      BinaryTopology: 'system.psf',
+      LIPID_COMPOSITION: {},
+      SOLUTION_COMPOSITION: {},
+    };
+
+    const out = CreateInfoFile(input);
+
+    expect(out.PSF).toBe('system.psf');
+    expect(out.TPR).toBeUndefined();
+    expect(out.BinaryTopology).toBeUndefined();
+    expect(out.SYSTEM).toBe('Bilayer Z');
+  });
+
+  
+  test('maps Structure with .pdb extension to PDB and removes Structure key', () => {
+    const input = {
+      SYSTEM: 'Bilayer B',
+      Structure: 'structure.pdb',
+      LIPID_COMPOSITION: {},
+      SOLUTION_COMPOSITION: {},
+    };
+
+    const out = CreateInfoFile(input);
+
+    expect(out.PDB).toBe('structure.pdb');
+    expect(out.GRO).toBeUndefined();
+    expect(out.Structure).toBeUndefined();
+    expect(out.SYSTEM).toBe('Bilayer B');
+  });
+
+  test('throws if Structure extension is not .gro or .pdb', () => {
+    const input = {
+      Structure: 'weird.xyz',
+      LIPID_COMPOSITION: {},
+      SOLUTION_COMPOSITION: {},
+    };
+
+    expect(() => CreateInfoFile(input)).toThrow(/\.gro or \.pdb/i);
+  });
+
 });

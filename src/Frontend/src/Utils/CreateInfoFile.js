@@ -13,6 +13,38 @@ export default function CreateInfoFile(data){
   })
   );
 
+if (filteredData['BinaryTopology']) {
+    const topo = filteredData['BinaryTopology'];
+    const lower = topo.toLowerCase();
+
+    if (lower.endsWith('.tpr')) {
+      filteredData.TPR = topo;
+    } else if (lower.endsWith('.psf')) {
+      filteredData.PSF = topo;
+    }
+    else {
+      throw new Error(`Binary topology must be a .tpr or .psf file, but got: "${topo}"`)
+    }
+    delete filteredData['BinaryTopology'];
+    
+  }
+
+  if (filteredData['Structure']) {
+    const struct = filteredData['Structure'];
+    const lower = struct.toLowerCase();
+
+    if (lower.endsWith('.gro')) {
+      filteredData.GRO = struct;
+    } else if (lower.endsWith('.pdb')) {
+      filteredData.PDB = struct;
+    }
+    else {
+      throw new Error("Structure must be a .gro or .pdb file)")
+    }
+    delete filteredData['Structure'];
+  }
+
+
 const merged = { ...LIPID_COMPOSITION, ...SOLUTION_COMPOSITION };
 
 const COMPOSITION = Object.fromEntries(

@@ -157,7 +157,14 @@ const handleSubmit = async e => {
     return;
   }
 
-  const infoFile = CreateInfoFile(data)
+  let infoFile;
+  try {
+    infoFile = CreateInfoFile(data);
+  } catch (err) {
+    console.error('CreateInfoFile error:', err);
+    setUploadStatus(err.message || "Failed to create INFO file.");
+    return; 
+  }
   
   // Creates JSON payload from data
   const jsonPayload = {
