@@ -290,14 +290,9 @@ return (
                 <button type="submit" className="button" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting…" : "Submit"}
                 </button>
-                {uploadStatus && (
-                <p
-                className="upload-status"
-                style={{ marginRight: '1em', whiteSpace: 'pre-wrap' }}
-              >
+               <p className="upload-status">
                 {uploadStatus}
-              </p>
-              )}
+                </p>
                 {pullRequestUrl && (
                   <a
                     href={pullRequestUrl}

@@ -240,7 +240,8 @@ input{box-sizing:border-box}
 .submit-row > :last-child  { justify-self: end; }
 
 .upload-status {
-  text-align: center;
+  white-space: pre-wrap;   
+  text-align: center;      
 }
 
 .mapping-select {
