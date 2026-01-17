@@ -138,9 +138,9 @@ def upload_file():
     if not user_name or not base_branch:
         return api_return(error="Missing userName or branch in JSON", status=400)
 
-    #Todo return specific yaml errors. 
-    if utils.is_input_invalid(data):
-        return api_return(error="Validation of info.yml failed, check required keys", status=400)
+    errors = utils.is_input_invalid(data)
+    if errors:
+        return api_return(error=errors, status=400)
 
     try: 
         commit_branch = utils.push_info_file(data, user_name)

@@ -196,24 +196,26 @@ def info_valid_check():
         return api_return(error=str(e), status=400)
     try:
         logger.info("Validating info file by schema")
-        errors = validate_info_dict(data)
+        errors = validate_info_dict(data) or []
         if errors:
-            for e in errors:
-                logger.error(str(e))
-            return api_return(
-                error="Schema validation failed: " + "; ".join(str(e) for e in errors),
-                payload={},
-                status=400
-            )
-        else:
-            logger.info("No errors found in info file by schema")
+            msg = format_schema_errors(errors)
+            logger.error("Schema validation failed:\n%s", msg)
+            return api_return(error=msg, status=400)
+
+        logger.info("No errors found in info file by schema")
+
     except Exception as e:
         logger.error("Schema validation crashed: %s", e)
-        return api_return(error=str(e), payload={}, status=400)
+        return api_return(error=str(e), status=400)
 
     return api_return(payload={"valid": True}, status=200)
         
-
+def format_schema_errors(errors) -> str:
+    lines = []
+    for e in errors:
+        path = ".".join(str(p) for p in e.path) if e.path else "<root>"
+        lines.append(f"{path}: {e.message}")
+    return "\n".join(lines)
 
 
 @app.route('/health', methods=['GET'])
