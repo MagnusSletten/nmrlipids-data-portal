@@ -291,9 +291,12 @@ return (
                   {isSubmitting ? "Submitting…" : "Submit"}
                 </button>
                 {uploadStatus && (
-                <p className="upload-status" style={{ marginRight: '1em' }}>
-                  {uploadStatus}
-                </p>
+                <p
+                className="upload-status"
+                style={{ marginRight: '1em', whiteSpace: 'pre-wrap' }}
+              >
+                {uploadStatus}
+              </p>
               )}
                 {pullRequestUrl && (
                   <a
