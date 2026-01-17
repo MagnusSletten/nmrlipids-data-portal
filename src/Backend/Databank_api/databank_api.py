@@ -1,13 +1,13 @@
 from flask import Flask, request, abort
 import os, json, subprocess
-from fairmd.lipids.databankLibrary import parse_valid_config_settings
+from fairmd.lipids.schema_validation.validate_info_dict import parse_valid_config_settings
 from fairmd.lipids import FMDL_MOL_PATH
 import fairmd.lipids.molecules as molecules
 import importlib
 import logging
 import requests
 from api_return_standard import api_return
-from fairmd.lipids.SchemaValidation.ValidateYAML import validate_info_dict
+from fairmd.lipids.schema_validation.validate_yaml import validate_info_dict
 
 app = Flask(__name__)
 # Paths and filenames
