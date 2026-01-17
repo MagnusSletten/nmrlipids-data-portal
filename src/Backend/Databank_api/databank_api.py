@@ -190,7 +190,7 @@ def info_valid_check():
     if not data:
         abort(400, description="Invalid or missing JSON payload")
     try:
-        parse_valid_config_settings(data)
+        parse_valid_config_settings(data,logger)
     except Exception as e:
         logger.error("Validation failed: %s", e)
         return api_return(error=str(e), status=400)
