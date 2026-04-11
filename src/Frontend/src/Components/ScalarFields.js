@@ -28,12 +28,21 @@ export default function ScalarFields({ data, onChange, fieldConfig, dropdownOpti
 
         const labelText = uiLabel ?? key;
 
+        const descriptionId = `${key}-description`;
+
         const label = (
-          <label htmlFor={key} title={description || ''}>
-            {labelText}
-            {unit && ` (${unit})`}
-            {required && <span className="required-asterisk"> *</span>}
-          </label>
+          <>
+            <label htmlFor={key} title={description || ''}>
+              {labelText}
+              {unit && ` (${unit})`}
+              {required && <span className="required-asterisk"> *</span>}
+            </label>
+            {description && (
+              <p id={descriptionId} className="field-description">
+                {description}
+              </p>
+            )}
+          </>
         );
 
         if (!dropdown) {
@@ -46,6 +55,7 @@ export default function ScalarFields({ data, onChange, fieldConfig, dropdownOpti
                 value={value}
                 onChange={onChange}
                 required={required}
+                aria-describedby={description ? descriptionId : undefined}
                 {...inputProps}
               />
             </div>
@@ -61,6 +71,7 @@ export default function ScalarFields({ data, onChange, fieldConfig, dropdownOpti
               value={value ?? ''}
               onChange={onChange}
               required={required}
+              aria-describedby={description ? descriptionId : undefined}
             >
               <option value="">Select an option</option>
               {dropdownOptions[key].map(softwareOption => (
@@ -73,7 +84,7 @@ export default function ScalarFields({ data, onChange, fieldConfig, dropdownOpti
         );
       })}
     </div>
-    <div className="required-hint">Fields marked with "*" are required. Hover over a field label for more information.
+    <div className="required-hint">Fields marked with "*" are required.
 </div>
       </>
   );
