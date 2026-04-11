@@ -75,48 +75,20 @@ html, body {
   width: 100%;
 }
 
-.Right-center {
-  width: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-}
 .required-asterisk {
   color: #c62828;   
   font-weight: 600;
 }
 
-/* Admin panel */
-.Admin-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
-  align-items: stretch;
-  text-align: center; 
-  box-sizing: border-box;
-  padding: 16px;
-  margin-top: 0;
-  border: 1px solid #b0c4de;
-  border-radius: 8px;
-  margin-bottom: 0;
-}
-.Admin-panel h3 {
-  margin: 0 0 0.75rem;
-  font-size: 1.1rem;
-  color: #0b3d91;
-}
-
 /* Header */
 .App-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .App-header h1 {
   margin: 0;
-  font-size: 1.9rem;
+  font-size: 2rem;
+  font-weight: 700;
   color: #0b3d91;
   letter-spacing: 0;
 }
@@ -172,8 +144,7 @@ html, body {
   outline-offset: 2px;
 }
 
-.information-pane,
-.admin-pane {
+.information-pane {
   width: min(100%, 900px);
   box-sizing: border-box;
   background: #ffffff;
@@ -185,8 +156,7 @@ html, body {
   padding: 28px;
 }
 
-.information-pane h2,
-.admin-pane h3 {
+.information-pane h2 {
   color: #0b3d91;
 }
 

@@ -17,21 +17,17 @@ export default function App() {
   const DataRepo = process.env.REACT_APP_DATA_REPO;
   const GITHUB_GATEWAY_PATH = '/app/';
   const API_PATH = '/api/';
-  const [loggedIn, setLoggedIn] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
   const [activePane, setActivePane] = useState('upload');
-  const [adminStatus, setAdminStatus] = useState(
-  localStorage.getItem('adminStatus') === 'true'
-);
   const [loggedInMessage, setLoggedInMessage] = useState(null);
   const [userName, setUserName] = useState('');
   const [branch, setBranch] = useState('main');
   const [message, setMessage] = useState('Fill in the form');
   const [pullRequestUrl, setPullRequestUrl] = useState(null);
-  const [refreshMessage, setRefreshMessage] = useState('');
   const [lipidList, setLipidList] = useState([]);
   const [solutionList, setSolutionList] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
-  const [mappingDict,setMappingDict] = useState(
+  const [mappingDict] = useState(
   JSON.parse(localStorage.getItem('mappingDict')) || {});
   const [data,setData] = useImmer(getInitialData());
   const resetData = () => setData(getInitialData());
@@ -54,36 +50,6 @@ useEffect(() => {
     })
     .catch(err => console.error("Failed to load mappings:", err));
 }, []);  
-
-// Function to update databank files:
-const updateDatabankFiles = async () => {
-  try {
-    await axios.post(
-      `${API_PATH}refresh-databank-files`,
-      {},
-      { headers: { Authorization: `Bearer ${localStorage.githubToken}` } }
-    );
-    setRefreshMessage('Databank files updated successfully');
-    // re-fetch updated lists
-    const resp = await axios.get(`${API_PATH}molecules`);
-    setLipidList(resp.data.lipids);
-    setSolutionList(resp.data.solution);
-
-    // re-fetch mapping file lists
-   axios.get(`${API_PATH}mapping-files`)
-    .then(res => {
-      localStorage.setItem('mappingDict', JSON.stringify(res.data));
-      setMappingDict(res.data);   
-    })
-    .catch(err => console.error("Failed to load mappings:", err));  
-  } catch (err) {
-    if (err.response?.status === 403) {
-      setRefreshMessage('Not authorized to refresh databank files');
-    } else {
-      setRefreshMessage('Refresh failed');
-    }
-  }
-}; 
 
 // Method to handle changes in form fields:
 const handleChange = e => {
@@ -111,13 +77,11 @@ useEffect(() => {
     axios.post(`${GITHUB_GATEWAY_PATH}verifyCode`, { code })
       .then(res => {
         if (res.data.authenticated) {
-          const { token, username, admin_status } = res.data;
+          const { token, username } = res.data;
           localStorage.githubToken = token;
           localStorage.username   = username;
-          localStorage.setItem('adminStatus', admin_status.toString());
           setLoggedIn(true);
           setLoggedInMessage(`Logged in as ${username}`);
-          setAdminStatus(admin_status);     
           window.history.replaceState(null, '', window.location.pathname);
         }
       })
@@ -132,7 +96,6 @@ useEffect(() => {
   const handleLogout = () => {
     localStorage.clear();
     setLoggedIn(false);
-    setAdminStatus(false)
     setLoggedInMessage(null);
     setMessage('Fill in the form');
     setUserName('');
@@ -215,7 +178,7 @@ return (
 
     <div className="App">
       <header className="App-header">
-        <h1>Welcome to the NMRLipids Upload Portal</h1>
+        <h1>FAIRMD Upload Portal</h1>
       </header>
           {!loggedIn && (
             <section className="information-pane logged-out-pane">
@@ -274,16 +237,6 @@ return (
             >
               Information
             </button>
-            {adminStatus && (
-              <button
-                type="button"
-                className={activePane === 'admin' ? 'active' : ''}
-                aria-pressed={activePane === 'admin'}
-                onClick={() => setActivePane('admin')}
-              >
-                Admin
-              </button>
-            )}
           </nav>
 
           {activePane === 'upload' && (
@@ -366,19 +319,6 @@ return (
             </section>
           )}
 
-          {activePane === 'admin' && adminStatus && (
-            <section className="admin-pane">
-              <div className="Admin-panel">
-                <h3>Administration panel</h3>
-                <div className="refresh-panel">
-                  <button onClick={updateDatabankFiles} className="button secondary">
-                    Update databank files
-                  </button>
-                  {refreshMessage && <p className="centered">{refreshMessage}</p>}
-                </div>
-              </div>
-            </section>
-          )}
         </>
       )}
     </div>
