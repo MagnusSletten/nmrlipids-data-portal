@@ -19,7 +19,6 @@ export default function App() {
   const API_PATH = '/api/';
   const [loggedIn, setLoggedIn] = useState(false);
   const [activePane, setActivePane] = useState('upload');
-  const [loggedInMessage, setLoggedInMessage] = useState(null);
   const [userName, setUserName] = useState('');
   const [branch, setBranch] = useState('main');
   const [message, setMessage] = useState('Fill in the form');
@@ -70,7 +69,6 @@ useEffect(() => {
   const code = params.get('code');
   if (localStorage.githubToken) {
     setLoggedIn(true);
-    setLoggedInMessage(`Logged in as ${localStorage.username}`);
     return;
   }
   if (code) {
@@ -81,7 +79,6 @@ useEffect(() => {
           localStorage.githubToken = token;
           localStorage.username   = username;
           setLoggedIn(true);
-          setLoggedInMessage(`Logged in as ${username}`);
           window.history.replaceState(null, '', window.location.pathname);
         }
       })
@@ -96,7 +93,6 @@ useEffect(() => {
   const handleLogout = () => {
     localStorage.clear();
     setLoggedIn(false);
-    setLoggedInMessage(null);
     setMessage('Fill in the form');
     setUserName('');
     setBranch('main');
@@ -177,6 +173,11 @@ return (
   </div>
 
     <div className="App">
+      {loggedIn && (
+        <button onClick={handleLogout} className="button secondary logout-button">
+          Logout
+        </button>
+      )}
       <header className="App-header">
         <h1>FAIRMD Upload Portal</h1>
       </header>
@@ -220,24 +221,26 @@ return (
 
       {loggedIn && (
         <>
-          <nav className="pane-selector" aria-label="Portal sections">
-            <button
-              type="button"
-              className={activePane === 'upload' ? 'active' : ''}
-              aria-pressed={activePane === 'upload'}
-              onClick={() => setActivePane('upload')}
-            >
-              Upload
-            </button>
-            <button
-              type="button"
-              className={activePane === 'information' ? 'active' : ''}
-              aria-pressed={activePane === 'information'}
-              onClick={() => setActivePane('information')}
-            >
-              Information
-            </button>
-          </nav>
+          <div className="top-actions">
+            <nav className="pane-selector" aria-label="Portal sections">
+              <button
+                type="button"
+                className={activePane === 'upload' ? 'active' : ''}
+                aria-pressed={activePane === 'upload'}
+                onClick={() => setActivePane('upload')}
+              >
+                Upload
+              </button>
+              <button
+                type="button"
+                className={activePane === 'information' ? 'active' : ''}
+                aria-pressed={activePane === 'information'}
+                onClick={() => setActivePane('information')}
+              >
+                Information
+              </button>
+            </nav>
+          </div>
 
           {activePane === 'upload' && (
             <>
@@ -303,11 +306,11 @@ return (
          <p className="docs-link">
           View full documentation on{' '}
           <a
-            href="https://nmrlipids.github.io/READMEcontent.html"
+            href="https://nmrlipids.github.io/FAIRMD_lipids/stable/schemas/simulation_metadata.html"
             target="_blank"
             rel="noopener noreferrer"
           >
-            GitHub Pages
+            FAIRMD lipid metadata
           </a>.
         </p>
             </>
@@ -323,19 +326,6 @@ return (
       )}
     </div>
 
-<div className="Right">
-  {loggedIn && (
-    <>
-      <div className="Right-top">
-        {loggedInMessage && <p className="user-info">{loggedInMessage}</p>}
-        <button onClick={handleLogout} className="button secondary">
-          Logout
-        </button>
-      </div>
-
-    </>
-  )}
-</div>
 </div>
 );
 }

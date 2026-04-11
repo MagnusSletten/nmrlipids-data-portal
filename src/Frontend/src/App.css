@@ -11,9 +11,6 @@ html, body {
 
 /* Grid container */
 .Container {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
-  gap: 0;
   min-height: 100vh;
   padding: 0;
   box-sizing: border-box;
@@ -21,7 +18,6 @@ html, body {
 
 /* Shared panel styling */
 .Left,
-.Right,
 .App {
   background-color: #e0f2ff;
   border: 1px solid #b0c4de;
@@ -35,13 +31,7 @@ html, body {
 }
 
 .App {
-  border-left: 1px solid #b0c4de;
-  border-right: 1px solid #b0c4de;
-}
-
-.Right {
-  border-left: 0;
-  min-width: 180px;
+  min-height: 100vh;
 }
 
 /* Center panel */
@@ -50,29 +40,13 @@ html, body {
   flex-direction: column;
   align-items: center;
   padding: 32px;
+  position: relative;
 }
 .required-hint {
   color: #24415c;
   font-size: 0.95rem;
   padding: 0;
   margin: 0 0 16px;
-}
-
-/* Right panel */
-.Right {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 16px;
-  padding: 14px;
-}
-
-.Right-top {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
 }
 
 .required-asterisk {
@@ -115,11 +89,20 @@ html, body {
   margin-bottom: 20px;
 }
 
+.top-actions {
+  width: min(100%, 1120px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
 .pane-selector {
   display: inline-flex;
   gap: 4px;
   padding: 4px;
-  margin-bottom: 24px;
   border: 1px solid #b0c4de;
   border-radius: 8px;
   background: #ffffff;
@@ -142,6 +125,12 @@ html, body {
 .pane-selector button:focus {
   outline: 3px solid rgba(13, 71, 161, 0.18);
   outline-offset: 2px;
+}
+
+.logout-button {
+  position: absolute;
+  right: 32px;
+  top: 32px;
 }
 
 .information-pane {
@@ -406,13 +395,6 @@ fieldset select:focus {
 .united-dict-section > button {
   align-self: flex-start;
 }
-.user-info {
-  color: #0b3d91;
-  font-size: 0.95rem;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
 .composition-info {
   padding-bottom: 20px;
 
@@ -480,13 +462,11 @@ a {
   }
 
   .Left,
-  .Right,
   .App {
     border: 1px solid #b0c4de;
   }
 
-  .Left,
-  .Right {
+  .Left {
     order: 2;
   }
 
@@ -501,9 +481,17 @@ a {
   }
 
   .App,
-  .Left,
-  .Right {
+  .Left {
     padding: 18px;
+  }
+
+  .top-actions {
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .logout-button {
+    position: static;
   }
 
   .upload-form {
