@@ -26,7 +26,7 @@ export default function App() {
   const [lipidList, setLipidList] = useState([]);
   const [solutionList, setSolutionList] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(null);
-  const [mappingDict] = useState(
+  const [mappingDict,setMappingDict] = useState(
   JSON.parse(localStorage.getItem('mappingDict')) || {});
   const [data,setData] = useImmer(getInitialData());
   const resetData = () => setData(getInitialData());
@@ -46,6 +46,7 @@ useEffect(() => {
   axios.get(`${API_PATH}mapping-files`)
     .then(res => {
       localStorage.setItem('mappingDict', JSON.stringify(res.data)); 
+      setMappingDict(res.data);
     })
     .catch(err => console.error("Failed to load mappings:", err));
 }, []);  
