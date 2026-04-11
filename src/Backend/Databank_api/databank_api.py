@@ -22,7 +22,7 @@ GITHUB_GATEWAY_URL = os.getenv("GITHUB_GATEWAY_URL", "http://github_gateway:5001
 os.makedirs(LOCAL_STATIC, exist_ok=True)
 
 lipids_set    = molecules.lipids_set
-molecules_set = molecules.molecules_set
+molecules_set = molecules.solubles_set
 
 logger = logging.getLogger('gunicorn.error')
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -50,9 +50,9 @@ def refresh_molecule_file():
     logger.info("Refreshing molecule file")
     importlib.reload(molecules)
 
-    global lipids_set, molecules_set
+    global lipids_set, solubles_set
     lipids = sorted(molecules.lipids_set.names)
-    solution = sorted(molecules.molecules_set.names)
+    solution = sorted(molecules.solubles_set.names)
 
     all_ids = {"lipids": lipids, "solution": solution}
 
