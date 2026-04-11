@@ -17,8 +17,8 @@ export default function App() {
   const DataRepo = process.env.REACT_APP_DATA_REPO;
   const GITHUB_GATEWAY_PATH = '/app/';
   const API_PATH = '/api/';
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [showInformation, setShowInformation] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(true);
+  const [activePane, setActivePane] = useState('upload');
   const [adminStatus, setAdminStatus] = useState(
   localStorage.getItem('adminStatus') === 'true'
 );
@@ -142,6 +142,7 @@ useEffect(() => {
     resetData();
     setIsSubmitting(false);
     setLastSavedFingerprint('');
+    setActivePane('upload');
   }
     
 // Handles form submission:
@@ -210,18 +211,6 @@ const handleSubmit = async e => {
 return (
 <div className="Container">
   <div className="Left">
-    {loggedIn && (
-      <>
-        <button
-          onClick={() => setShowInformation(prev => !prev)}
-          className="button secondary"
-        >
-          {showInformation ? "Hide" : "Show"} Information
-        </button>
-
-        {showInformation && <Information />}
-      </>
-    )}
   </div>
 
     <div className="App">
@@ -229,38 +218,92 @@ return (
         <h1>Welcome to the NMRLipids Upload Portal</h1>
       </header>
           {!loggedIn && (
-       <> 
-        <button
-            onClick={githubLogin}
-            className="button centered"
-          >
-            GitHub Login
-          </button>
-         <h3>Information</h3>
-         <div className="info-block">
-         <p>Please log in with GitHub to upload data.</p>
-         <p>GitHub login is currently used as a way to authenticate users and reduce spam.</p>
-         <p>The login process authorizes the app to access your public information, specifically your username. Nothing else.</p>
-        </div>
-        </>
+            <section className="information-pane logged-out-pane">
+              <div className="login-panel">
+                <div>
+                  <h2>Sign in to upload data</h2>
+                  <p>
+                    Uploads are handled through GitHub so submissions can be reviewed as pull requests.
+                  </p>
+                </div>
+                <button
+                  onClick={githubLogin}
+                  className="button github-login centered"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="github-logo"
+                    viewBox="0 0 16 16"
+                    width="20"
+                    height="20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 3.87c.68 0 1.36.09 2 .26 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+                    />
+                  </svg>
+                  Sign in with GitHub
+                </button>
+                <div className="info-block">
+                  <p>GitHub login is used to verify your identity and reduce spam. The app only uses your public GitHub username.</p>
+                </div>
+              </div>
+              <div className="logged-out-summary">
+                <h3>How it works</h3>
+                <p>Fill in the upload form, submit your simulation information, and follow the generated pull request for review.</p>
+              </div>
+            </section>
       )}
 
       {loggedIn && (
         <>
-          <input
-            type="text"
-            placeholder="Enter your name"
-            value={userName}
-            onChange={e => setUserName(e.target.value)}
-            className="name-input centered"
-          />
+          <nav className="pane-selector" aria-label="Portal sections">
+            <button
+              type="button"
+              className={activePane === 'upload' ? 'active' : ''}
+              aria-pressed={activePane === 'upload'}
+              onClick={() => setActivePane('upload')}
+            >
+              Upload
+            </button>
+            <button
+              type="button"
+              className={activePane === 'information' ? 'active' : ''}
+              aria-pressed={activePane === 'information'}
+              onClick={() => setActivePane('information')}
+            >
+              Information
+            </button>
+            {adminStatus && (
+              <button
+                type="button"
+                className={activePane === 'admin' ? 'active' : ''}
+                aria-pressed={activePane === 'admin'}
+                onClick={() => setActivePane('admin')}
+              >
+                Admin
+              </button>
+            )}
+          </nav>
+
+          {activePane === 'upload' && (
+            <>
+          <div className="upload-controls">
+            <input
+              type="text"
+              placeholder="Enter your name"
+              value={userName}
+              onChange={e => setUserName(e.target.value)}
+              className="name-input centered"
+            />
             <BranchSelect
               selectedBranch={branch}
               setSelectedBranch={setBranch}
               setMessage={setMessage}
               DataRepo={DataRepo}
             />
-          {message && <p className="status-message-centered">Status: {message}</p>}
+            {message && <p className="status-message-centered">Status: {message}</p>}
+          </div>
 
           <form onSubmit={handleSubmit} className="upload-form">
               <ScalarFields
@@ -314,6 +357,28 @@ return (
             GitHub Pages
           </a>.
         </p>
+            </>
+          )}
+
+          {activePane === 'information' && (
+            <section className="information-pane">
+              <Information />
+            </section>
+          )}
+
+          {activePane === 'admin' && adminStatus && (
+            <section className="admin-pane">
+              <div className="Admin-panel">
+                <h3>Administration panel</h3>
+                <div className="refresh-panel">
+                  <button onClick={updateDatabankFiles} className="button secondary">
+                    Update databank files
+                  </button>
+                  {refreshMessage && <p className="centered">{refreshMessage}</p>}
+                </div>
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>
@@ -322,24 +387,12 @@ return (
   {loggedIn && (
     <>
       <div className="Right-top">
+        {loggedInMessage && <p className="user-info">{loggedInMessage}</p>}
         <button onClick={handleLogout} className="button secondary">
           Logout
         </button>
       </div>
 
-      {adminStatus && (
-        <div className="Right-center">
-          <div className="Admin-panel">
-            <h3>Administration panel</h3>
-            <div className="refresh-panel">
-              <button onClick={updateDatabankFiles} className="button secondary">
-                Update databank files
-              </button>
-              {refreshMessage && <p className="centered">{refreshMessage}</p>}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )}
 </div>
